@@ -1,0 +1,1 @@
+nasm -f elf64 kernel/arch/x86_64/boot.asm -o boot.o
