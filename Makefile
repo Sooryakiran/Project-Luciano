@@ -56,7 +56,7 @@ $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.c
 		-c $<  \
 		-o $@
 
-X86_OBJS = $(X86_BUILD_DIR)/kmain.o $(X86_BUILD_DIR)/boot.o $(X86_BUILD_DIR)/debug.o
+X86_OBJS = $(X86_BUILD_DIR)/kmain.o $(X86_BUILD_DIR)/boot.o $(X86_BUILD_DIR)/debug.o $(X86_BUILD_DIR)/arch.o
 
 link_kernel_x86: $(X86_OBJS)
 	ld.lld \
