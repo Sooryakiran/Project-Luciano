@@ -1,15 +1,6 @@
 #include "types.h"
 #include "debug.h"
-
-typedef uint64_t gdt_entry_t;
-
-typedef struct
-{
-    uint32_t base;
-    uint32_t limit;
-    uint8_t acess_byte;
-    uint8_t flag;
-} gdt;
+#include "arch/x86_64/gdt.h"
 
 gdt_entry_t create_gdt_entry(gdt entry)
 {

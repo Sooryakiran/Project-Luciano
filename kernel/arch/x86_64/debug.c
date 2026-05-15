@@ -1,5 +1,5 @@
 #include "debug.h"
-#include "io.h"
+#include "arch/x86_64/io.h"
 
 void k_init() {
     outb(0x3F8 + 1, 0x00);

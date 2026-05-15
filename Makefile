@@ -8,6 +8,8 @@ LIMINE_CONF := bootloader/limine.conf
 LIMINE_BRANCH := v8.x-binary
 
 X86_BUILD_DIR := $(BUILD_DIR)/x86_64
+X86_TEST_BUILD_DIR := $(BUILD_DIR)/x86_64_test
+X86_TEST_DIR := tests/kernel/arch/x86_64
 X86_ISO_DIR := $(ISO_DIR)/x86_64
 ISO_NAME = waltos.iso
 
@@ -32,14 +34,6 @@ x_86_setup: setup
 	mkdir -p $(X86_BUILD_DIR)
 	mkdir -p $(X86_ISO_DIR)
 
-# boot_x86: x_86_setup
-# 	nasm -f elf64 $(KERNEL_DIR)/arch/x86_64/boot.asm -o  $(X86_BUILD_DIR)/boot.o
-
-# kernel_x86: boot_x86
-# 	clang --target=x86_64-elf \
-# 		$(X86_CFLAGS) \
-# 		-c $(KERNEL_DIR)/kmain.c  \
-# 		-o $(X86_BUILD_DIR)/kmain.o
 
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/%.c
 	clang --target=x86_64-elf \
@@ -56,7 +50,9 @@ $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.c
 		-c $<  \
 		-o $@
 
-X86_OBJS = $(X86_BUILD_DIR)/kmain.o $(X86_BUILD_DIR)/boot.o $(X86_BUILD_DIR)/debug.o $(X86_BUILD_DIR)/arch.o
+
+
+X86_OBJS = $(X86_BUILD_DIR)/kmain.o $(X86_BUILD_DIR)/boot.o $(X86_BUILD_DIR)/debug.o $(X86_BUILD_DIR)/arch.o $(X86_BUILD_DIR)/gdt.o
 
 link_kernel_x86: $(X86_OBJS)
 	ld.lld \
@@ -85,6 +81,27 @@ emulate_x86:
     -serial stdio \
     -m 256M
 
+X86_TEST_SRCS = $(wildcard $(X86_TEST_DIR)/*.c)
+X86_TEST_BINS = $(patsubst $(X86_TEST_DIR)/%.c, $(X86_TEST_BUILD_DIR)/%, $(X86_TEST_SRCS))
+
+X86_ARCH_SRCS = $(wildcard $(KERNEL_DIR)/arch/x86_64/*.c)
+X86_TEST_KERN_OBJS = $(patsubst $(KERNEL_DIR)/arch/x86_64/%.c, $(X86_TEST_BUILD_DIR)/%.o, $(X86_ARCH_SRCS))
+
+test_x86_setup: setup
+	mkdir -p $(X86_TEST_BUILD_DIR)
+
+$(X86_TEST_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.c test_x86_setup
+	clang -DUNIT_TEST -I./$(KERNEL_DIR)/include -I./$(KERNEL_DIR)/arch/x86_64 -c $< -o $@
+
+$(X86_TEST_BUILD_DIR)/%: $(X86_TEST_DIR)/%.c $(X86_TEST_KERN_OBJS)
+	echo "kernel objs: $(X86_TEST_KERN_OBJS)"
+	clang -DUNIT_TEST -I./$(KERNEL_DIR)/include $< $(X86_TEST_KERN_OBJS) -o $@
+	./$@
+
+test_x86: $(X86_TEST_BINS)
+	echo "test suite completed"
+	
 clean:
 	rm -rf $(BUILD_DIR)/*
 	rm -rf $(ISO_DIR)/*
+
