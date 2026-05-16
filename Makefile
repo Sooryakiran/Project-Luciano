@@ -58,7 +58,10 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/debug.o \
 	$(X86_BUILD_DIR)/arch.o \
 	$(X86_BUILD_DIR)/gdt.o \
-	$(X86_BUILD_DIR)/gdt_flush.o
+	$(X86_BUILD_DIR)/gdt_flush.o \
+	$(X86_BUILD_DIR)/idt.o \
+	$(X86_BUILD_DIR)/isr_table.o \
+	$(X86_BUILD_DIR)/isr.o
 
 link_kernel_x86: $(X86_OBJS)
 	ld.lld \
