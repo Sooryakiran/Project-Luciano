@@ -20,3 +20,4 @@ typedef struct
 
 
 void idt_init();
+void sti();

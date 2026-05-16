@@ -61,7 +61,8 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/gdt_flush.o \
 	$(X86_BUILD_DIR)/idt.o \
 	$(X86_BUILD_DIR)/isr_table.o \
-	$(X86_BUILD_DIR)/isr.o
+	$(X86_BUILD_DIR)/isr.o \
+	$(X86_BUILD_DIR)/pic.o
 
 link_kernel_x86: $(X86_OBJS)
 	ld.lld \
