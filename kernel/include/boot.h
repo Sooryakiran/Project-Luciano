@@ -7,6 +7,7 @@ typedef struct
 {
     mem_region *regions;
     size_t region_count;
+    uint64_t hhdm_offset;
 } boot_info;
 
 

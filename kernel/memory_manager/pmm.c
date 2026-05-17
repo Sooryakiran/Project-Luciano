@@ -18,6 +18,7 @@ uint64_t get_total_memory_size(mem_region *regions, size_t count)
 static uint64_t pmm_total_frames;
 static uint64_t pmm_bitmap_size;
 static uint8_t *pmm_bitmap;
+static uint64_t pmm_physical;
 
 paddr_t pmm_alloc()
 {
@@ -52,7 +53,7 @@ void pmm_free(paddr_t addr) {
     k_log("[PMM] Memory freed.");
 }
 
-void pmm_init(mem_region *regions, size_t count)
+void pmm_init(mem_region *regions, size_t count, uint64_t hhdm_offset)
 {
     k_log("[PMM] Initializing physical memory maps");
 
@@ -67,7 +68,8 @@ void pmm_init(mem_region *regions, size_t count)
         if (regions[i].type == MEM_USABLE && regions[i].size > pmm_bitmap_size) // we are comparing in bytes
         {
             k_log("[PMM] Found free region to allocate pmm_bitmap");
-            pmm_bitmap = (uint8_t *)(regions[i].offset);
+            pmm_physical = regions[i].offset;
+            pmm_bitmap = (uint8_t *)(pmm_physical + hhdm_offset);
             break;
         }
     }
@@ -94,18 +96,18 @@ void pmm_init(mem_region *regions, size_t count)
             // we take the frame remainder, eg if 7th: we get 01000000,
             // and we invert it 1011111, and & with the existing value,
             // to clear the particular bit
-            pmm_bitmap[f / 8] &= ~(1 << (f % 8));
+            pmm_bitmap[f / 8] &= ~(1U << (f % 8));
         }
     }
     k_log("[PMM] Done clearing free regions.");
 
     // unclear bitmap allocated region
     k_log("[PMM] Marking bitmap used region as used");
-    uint64_t bitmap_frame_start = (uint64_t)pmm_bitmap / FRAME_SIZE;
+    uint64_t bitmap_frame_start = (uint64_t)pmm_physical / FRAME_SIZE;
     uint64_t bitmap_frame_count = (pmm_bitmap_size + FRAME_SIZE - 1) / FRAME_SIZE;
     for (uint64_t f = bitmap_frame_start; f < bitmap_frame_start + bitmap_frame_count; f++)
     {
-        pmm_bitmap[f / 8] |= (1 << (f % 8));
+        pmm_bitmap[f / 8] |= (1U << (f % 8));
     }
     k_log("[PMM] Done marking bitmap used region as used");
 }

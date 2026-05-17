@@ -5,6 +5,8 @@
 #include "types.h"
 
 #define LIMINE_MEMMAP_REQUEST_ID {LIMINE_COMMON_MAGIC, 0x67cf3d9d378a806f, 0xe304acdfc50c3c62}
+// #define LIMINE_HHDM_REQUEST {LIMINE_COMMON_MAGIC, 0x48dcf1cb8ad2b852, 0x63984e959a98244b}
+
 #define MAX_CHUNKS 256;
 
 static volatile struct limine_memmap_request memmap_request =
@@ -12,6 +14,12 @@ static volatile struct limine_memmap_request memmap_request =
         .id = LIMINE_MEMMAP_REQUEST_ID,
         .revision = 0,
         .response = NULL};
+
+static volatile struct limine_hhdm_request hhdm_request =
+    {
+        .id = LIMINE_HHDM_REQUEST,
+        .response = NULL
+    };
 
 mem_region_type get_type(uint64_t limine_type)
 {
@@ -48,4 +56,11 @@ void get_boot_entry(boot_info *info)
     }
 
     k_log("entry count is %d", info->region_count);
+
+    k_log("[BOOT][LIMINE] Getting HHDM offset");
+    if (hhdm_request.response == NULL) {
+        k_panic("[BOOT][LIMINE] Unable to ged HHDM offset");
+    }
+    info->hhdm_offset = hhdm_request.response->offset;
+    k_log("[BOOT][LIMINE] Obtained HHDM offset as %lu", info->hhdm_offset);
 }

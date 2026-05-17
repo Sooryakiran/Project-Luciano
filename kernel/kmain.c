@@ -14,7 +14,8 @@ void kmain(void) {
     get_boot_entry(&info);
 
     arch_init();
-    pmm_init(info.regions, info.region_count);
+    pmm_init(info.regions, info.region_count, info.hhdm_offset);
+    
     // paddr_t f1 = pmm_alloc();
     // pmm_free(f1);
     // paddr_t f2 = pmm_alloc();

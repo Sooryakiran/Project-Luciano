@@ -13,6 +13,6 @@ typedef struct {
     mem_region_type type;
 } mem_region;
 
-void pmm_init(mem_region *regions, size_t count);
+void pmm_init(mem_region *regions, size_t count, uint64_t hhdm_offset);
 paddr_t pmm_alloc();
 void pmm_free(uint64_t addr); 
