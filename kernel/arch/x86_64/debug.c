@@ -1,5 +1,6 @@
 #include "debug.h"
 #include "arch/x86_64/io.h"
+#include <stdarg.h>
 
 #ifndef UNIT_TEST
 void k_init()
@@ -25,31 +26,112 @@ void k_print(const char *s)
         k_putc(*s++);
 }
 
-void k_print_format(const char *t, const char *s)
+void k_printf(const char *s, va_list args)
+{
+    while (*s)
+        if (*s == '%')
+        {
+            s++;
+            switch (*s)
+            {
+            case 'l':
+            {
+                s++;
+                if (*s == 'u') {
+                    uint64_t n = va_arg(args, uint64_t);
+                    char buf[32];
+                    int i = 0;
+                    while(n > 0) {
+                        buf[i++] = '0' + n % 10;
+                        n /= 10;
+                    }
+                    while(i--)
+                        k_putc(buf[i]);
+                    s++;
+                }
+                break;
+            }
+            case 'd':
+            {
+                int n;
+                n = va_arg(args, int);
+                char buf[32];
+                int i = 0;
+                if (n == 0)
+                {
+                    k_putc('0');
+                    break;
+                }
+                if (n < 0)
+                {
+                    k_putc('-');
+                    n = -n;
+                }
+                while (n > 0)
+                {
+                    buf[i++] = '0' + (n % 10);
+                    n /= 10;
+                }
+
+                while (i--)
+                {
+                    k_putc(buf[i]);
+                }
+                s++;
+                break;
+            }
+
+            default:
+            {
+                k_putc('%');
+                break;
+            }
+            }
+        }
+        else
+        {
+            k_putc(*s++);
+        }
+}
+
+void k_print_format(const char *t, const char *s, va_list args)
 {
     k_print(t);
-    k_print(s);
+    k_printf(s, args);
     k_print("\n");
 }
 
-void k_log(const char *s)
+void k_log(const char *s, ...)
 {
-    k_print_format("[LOG] ", s);
+    va_list args;
+    va_start(args, s);
+    k_print_format("[LOG] ", s, args);
+    va_end(args);
 }
 
-void k_warn(const char *s)
+void k_warn(const char *s, ...)
 {
-    k_print_format("[WARN] ", s);
+    va_list args;
+    va_start(args, s);
+    k_print_format("[WARN] ", s, args);
+    va_end(args);
 }
 
-void k_error(const char *s)
+void k_error(const char *s, ...)
 {
-    k_print_format("[ERROR] ", s);
+    va_list args;
+    va_start(args, s);
+    k_print_format("[ERROR] ", s, args);
+    va_end(args);
 }
 
-void k_panic(const char *s)
+void k_panic(const char *s, ...)
 {
-    k_print_format("[PANIC] ", s);
+    va_list args;
+    va_start(args, s);
+    k_print_format("[PANIC] ", s, args);
+    va_end(args);
+
     for (;;)
         ; // halt
 }
@@ -63,10 +145,10 @@ void k_debug_unit_test_reset()
     k_debug_panic_called = 0;
 }
 
-int k_debug_get_num_panics() {
+int k_debug_get_num_panics()
+{
     return k_debug_panic_called;
 }
-
 
 void k_init(void) {}
 void k_putc(char c) {}

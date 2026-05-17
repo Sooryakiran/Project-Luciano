@@ -17,6 +17,7 @@ X86_CFLAGS = -ffreestanding \
 		-fno-stack-protector \
 		-fno-pic \
 		-mno-red-zone \
+		-mcmodel=kernel \
 		-I./$(KERNEL_DIR)/include \
 
 limine_setup:
@@ -33,6 +34,8 @@ setup: limine_setup
 x_86_setup: setup
 	mkdir -p $(X86_BUILD_DIR)
 	mkdir -p $(X86_ISO_DIR)
+	mkdir -p $(X86_BUILD_DIR)/boot
+	mkdir -p $(X86_BUILD_DIR)/memory_manager
 
 
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/%.c
@@ -41,8 +44,16 @@ $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/%.c
 		-c $<  \
 		-o $@
 
+$(X86_BUILD_DIR)/memory_manager/%.o: $(KERNEL_DIR)/memory_manager/%.c
+	clang --target=x86_64-elf \
+		$(X86_CFLAGS) \
+		-c $<  \
+		-o $@
+
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.asm
 	nasm -f elf64 $< -o $@
+
+X86_CLANG = clang --target=x86_64-elf $(X86_CFLAGS) -c $< -o $@
 
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.c
 	clang --target=x86_64-elf \
@@ -50,7 +61,12 @@ $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.c
 		-c $<  \
 		-o $@
 
-
+$(X86_BUILD_DIR)/boot/%.o: $(KERNEL_DIR)/arch/x86_64/boot/%.c
+	@echo "Compiling $< -> $@"
+	clang --target=x86_64-elf \
+		$(X86_CFLAGS) \
+		-c $<  \
+		-o $@
 
 X86_OBJS = \
 	$(X86_BUILD_DIR)/kmain.o \
@@ -62,7 +78,9 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/idt.o \
 	$(X86_BUILD_DIR)/isr_table.o \
 	$(X86_BUILD_DIR)/isr.o \
-	$(X86_BUILD_DIR)/pic.o
+	$(X86_BUILD_DIR)/pic.o \
+	$(X86_BUILD_DIR)/boot/limine.o \
+	$(X86_BUILD_DIR)/memory_manager/pmm.o
 
 link_kernel_x86: $(X86_OBJS)
 	ld.lld \

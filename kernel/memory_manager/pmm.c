@@ -1,0 +1,111 @@
+#include "pmm.h"
+#include "debug.h"
+
+#define FRAME_SIZE 4096
+
+uint64_t get_total_memory_size(mem_region *regions, size_t count)
+{
+    uint64_t top = 0;
+    for (size_t i = 0; i < count; i++)
+    {
+        uint64_t end_region = regions[i].offset + regions[i].size;
+        if (end_region > top)
+            top = end_region;
+    }
+    return top;
+}
+
+static uint64_t pmm_total_frames;
+static uint64_t pmm_bitmap_size;
+static uint8_t *pmm_bitmap;
+
+paddr_t pmm_alloc()
+{
+    k_log("[PMM] Allocating");
+    for (uint64_t i = 0; i < pmm_bitmap_size; i++)
+    {
+        if (pmm_bitmap[i] == 0xFF)
+            continue;
+
+        for (int j = 0; j < 8; j++)
+        {
+            if (((1 << j) & pmm_bitmap[i]) != 0)
+                continue;
+            pmm_bitmap[i] |= (1 << j);
+            k_log("[PMM] Allocated!");
+            return (i * 8 + j) * FRAME_SIZE;
+        }
+    }
+
+    // TODO: return null and let paging handle LRU eviction to swap etc. 
+    // TODO: don't panic that time
+    k_panic("[PMM] no place to allocate");
+    return 0;
+}
+
+void pmm_free(paddr_t addr) {
+    k_log("[PMM] Freeing memory.");
+    uint64_t frame = addr / FRAME_SIZE;
+    uint8_t j = frame % 8;
+    uint64_t i = frame / 8;
+    pmm_bitmap[i] &= ~(1 << j);
+    k_log("[PMM] Memory freed.");
+}
+
+void pmm_init(mem_region *regions, size_t count)
+{
+    k_log("[PMM] Initializing physical memory maps");
+
+    uint64_t total_memory = get_total_memory_size(regions, count);
+    pmm_total_frames = (total_memory + FRAME_SIZE - 1) / FRAME_SIZE;
+    pmm_bitmap_size = (pmm_total_frames + 7) / 8;
+    k_log("[PMM] bitmap_size is %lu", pmm_bitmap_size);
+
+    // find usable region
+    for (size_t i = 0; i < count; i++)
+    {
+        if (regions[i].type == MEM_USABLE && regions[i].size > pmm_bitmap_size) // we are comparing in bytes
+        {
+            k_log("[PMM] Found free region to allocate pmm_bitmap");
+            pmm_bitmap = (uint8_t *)(regions[i].offset);
+            break;
+        }
+    }
+
+    // mark all frames as used
+    k_log("[PMM] Marking all regions as used.");
+    for (uint64_t i = 0; i < pmm_bitmap_size; i++)
+    {
+        pmm_bitmap[i] = 0xFF;
+    }
+    k_log("[PMM] Done marking all regions as used.");
+
+    // clear free regions
+    k_log("[PMM] Clearning regions that are free");
+    for (size_t i = 0; i < count; i++)
+    {
+        if (regions[i].type != MEM_USABLE)
+            continue;
+        uint64_t frame_start = regions[i].offset / FRAME_SIZE;
+        uint64_t frame_count = regions[i].size / FRAME_SIZE;
+        for (uint64_t f = frame_start; f < frame_start + frame_count; f++)
+        {
+            // we store 8 bits in a uint8
+            // we take the frame remainder, eg if 7th: we get 01000000,
+            // and we invert it 1011111, and & with the existing value,
+            // to clear the particular bit
+            pmm_bitmap[f / 8] &= ~(1 << (f % 8));
+        }
+    }
+    k_log("[PMM] Done clearing free regions.");
+
+    // unclear bitmap allocated region
+    k_log("[PMM] Marking bitmap used region as used");
+    uint64_t bitmap_frame_start = (uint64_t)pmm_bitmap / FRAME_SIZE;
+    uint64_t bitmap_frame_count = (pmm_bitmap_size + FRAME_SIZE - 1) / FRAME_SIZE;
+    for (uint64_t f = bitmap_frame_start; f < bitmap_frame_start + bitmap_frame_count; f++)
+    {
+        pmm_bitmap[f / 8] |= (1 << (f % 8));
+    }
+    k_log("[PMM] Done marking bitmap used region as used");
+}
