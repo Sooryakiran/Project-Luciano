@@ -5,7 +5,6 @@
 #include "types.h"
 
 #define LIMINE_MEMMAP_REQUEST_ID {LIMINE_COMMON_MAGIC, 0x67cf3d9d378a806f, 0xe304acdfc50c3c62}
-// #define LIMINE_HHDM_REQUEST {LIMINE_COMMON_MAGIC, 0x48dcf1cb8ad2b852, 0x63984e959a98244b}
 
 #define MAX_CHUNKS 256;
 
@@ -18,10 +17,16 @@ static volatile struct limine_memmap_request memmap_request =
 static volatile struct limine_hhdm_request hhdm_request =
     {
         .id = LIMINE_HHDM_REQUEST,
-        .response = NULL
-    };
+        .response = NULL};
 
-mem_region_type get_type(uint64_t limine_type)
+static volatile struct limine_kernel_address_request k_address_request =
+    {
+        .id = LIMINE_KERNEL_ADDRESS_REQUEST,
+        .revision = 0,
+        .response = NULL};
+
+mem_region_type
+get_type(uint64_t limine_type)
 {
     switch (limine_type)
     {
@@ -38,10 +43,10 @@ static mem_region mem_regions[256];
 
 void get_boot_entry(boot_info *info)
 {
-    k_log("Getting boot info for x86_64 limine bootloader");
+    k_log("[BOOT][LIMINE] Getting boot info for x86_64 limine bootloader");
     if (memmap_request.response == NULL)
     {
-        k_panic("No memory map from bootloader");
+        k_panic("[BOOT][LIMINE] No memory map from bootloader");
         return;
     }
     info->region_count = memmap_request.response->entry_count;
@@ -55,12 +60,22 @@ void get_boot_entry(boot_info *info)
             .type = get_type(entry->type)};
     }
 
-    k_log("entry count is %d", info->region_count);
+    k_log("[BOOT][LIMINE] entry count is %d", info->region_count);
 
     k_log("[BOOT][LIMINE] Getting HHDM offset");
-    if (hhdm_request.response == NULL) {
+    if (hhdm_request.response == NULL)
+    {
         k_panic("[BOOT][LIMINE] Unable to ged HHDM offset");
     }
     info->hhdm_offset = hhdm_request.response->offset;
     k_log("[BOOT][LIMINE] Obtained HHDM offset as %lu", info->hhdm_offset);
+
+    k_log("[BOOT][LIMINE] Getting kernel address...");
+    if (k_address_request.response == NULL) 
+    {
+        k_panic("[BOOT][LIMINE] Unable to get kernel addr");
+    }
+    info->kernel_physical_addr = k_address_request.response->physical_base;
+    info->kernel_virtual_addr = k_address_request.response->virtual_base;
+    k_log("[BOOT][LIMINE] Obtained kernel addresses.");
 }

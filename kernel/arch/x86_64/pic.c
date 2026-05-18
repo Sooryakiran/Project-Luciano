@@ -12,7 +12,7 @@
 #define EOI 0x20
 
 void pic_init() {
-    k_log("Initializing PIC");
+    k_log("[PIC] Initializing PIC");
 
     // mask all first
     outb(MASTER_DATA_PORT, 0xFF);
@@ -38,7 +38,7 @@ void pic_init() {
     outb(MASTER_DATA_PORT, 0);
     outb(SLAVE_DATA_PORT, 0);
 
-    k_log("PIC Initialized");
+    k_log("[PIC] PIC Initialized");
 }
 
 void pic_eoi(uint64_t vector) {

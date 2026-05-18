@@ -26,6 +26,61 @@ void k_print(const char *s)
         k_putc(*s++);
 }
 
+void k_printf_lu(uint64_t n)
+{
+    char buf[32];
+    int i = 0;
+    while (n > 0)
+    {
+        buf[i++] = '0' + n % 10;
+        n /= 10;
+    }
+    while (i--)
+        k_putc(buf[i]);
+}
+
+void k_printf_d(int n)
+{
+    char buf[32];
+    int i = 0;
+    if (n == 0)
+    {
+        k_putc('0');
+        return;
+    }
+    if (n < 0)
+    {
+        k_putc('-');
+        n = -n;
+    }
+    while (n > 0)
+    {
+        buf[i++] = '0' + (n % 10);
+        n /= 10;
+    }
+
+    while (i--)
+    {
+        k_putc(buf[i]);
+    }
+}
+
+void k_printf_b(uint64_t n) {
+    char buf[64];
+    if (n == 0) {
+        k_putc('0');
+        return;
+    }
+    int i = 0;
+    while (n > 0) {
+        buf[i++] = ((n & 0x1) == 1)? '1' : '0';
+        n >>= 1;
+    }
+    while (i--) {
+        k_putc(buf[i]);
+    }
+}
+
 void k_printf(const char *s, va_list args)
 {
     while (*s)
@@ -37,16 +92,10 @@ void k_printf(const char *s, va_list args)
             case 'l':
             {
                 s++;
-                if (*s == 'u') {
+                if (*s == 'u')
+                {
                     uint64_t n = va_arg(args, uint64_t);
-                    char buf[32];
-                    int i = 0;
-                    while(n > 0) {
-                        buf[i++] = '0' + n % 10;
-                        n /= 10;
-                    }
-                    while(i--)
-                        k_putc(buf[i]);
+                    k_printf_lu(n);
                     s++;
                 }
                 break;
@@ -55,28 +104,16 @@ void k_printf(const char *s, va_list args)
             {
                 int n;
                 n = va_arg(args, int);
-                char buf[32];
-                int i = 0;
-                if (n == 0)
-                {
-                    k_putc('0');
-                    break;
-                }
-                if (n < 0)
-                {
-                    k_putc('-');
-                    n = -n;
-                }
-                while (n > 0)
-                {
-                    buf[i++] = '0' + (n % 10);
-                    n /= 10;
-                }
-
-                while (i--)
-                {
-                    k_putc(buf[i]);
-                }
+                k_printf_d(n);
+                s++;
+                break;
+            }
+            
+            case 'b':
+            {
+                uint64_t n;
+                n = va_arg(args, uint64_t);
+                k_printf_b(n);
                 s++;
                 break;
             }

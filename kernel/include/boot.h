@@ -8,6 +8,8 @@ typedef struct
     mem_region *regions;
     size_t region_count;
     uint64_t hhdm_offset;
+    paddr_t kernel_physical_addr;
+    paddr_t kernel_virtual_addr;
 } boot_info;
 
 

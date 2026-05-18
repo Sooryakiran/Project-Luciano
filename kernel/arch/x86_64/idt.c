@@ -20,7 +20,7 @@ idt_entry create_idt_entry(void* offset, uint8_t flags) {
 }
 
 void idt_init() {
-    k_log("Initializing IDT");
+    k_log("[IDT] Initializing IDT");
 
     __attribute__((aligned(0x10))) 
     static idt_entry idt[256];
@@ -35,7 +35,7 @@ void idt_init() {
 
     __asm__ volatile ("lidt %0" : : "m"(registry));
 
-    k_log("IDT set successfully");
+    k_log("[IDT] IDT set successfully");
 }
 
 void sti() {

@@ -24,11 +24,11 @@ void exception_handler(uint64_t vector, uint64_t error_code) {
         return;
     }
     
-    k_log("vector");
+    k_log("[ISR] vector");
     k_log(msg);
-    k_log("error code");
+    k_log("[ISR] error code");
     k_log(err_msg);
-    k_panic("exception occured");
+    k_panic("[ISR] exception occured");
     while (1) {}
 }
 
@@ -54,5 +54,5 @@ void timer_handler() {
 
 void keyboard_handler() {
     uint8_t scancode = inb(0x60);
-    k_log("Keyboard handler");
+    k_log("[ISR] Keyboard handler");
 }

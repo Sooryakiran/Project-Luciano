@@ -36,6 +36,7 @@ x_86_setup: setup
 	mkdir -p $(X86_ISO_DIR)
 	mkdir -p $(X86_BUILD_DIR)/boot
 	mkdir -p $(X86_BUILD_DIR)/memory_manager
+	mkdir -p $(X86_BUILD_DIR)/libc
 
 
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/%.c
@@ -45,6 +46,12 @@ $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/%.c
 		-o $@
 
 $(X86_BUILD_DIR)/memory_manager/%.o: $(KERNEL_DIR)/memory_manager/%.c
+	clang --target=x86_64-elf \
+		$(X86_CFLAGS) \
+		-c $<  \
+		-o $@
+
+$(X86_BUILD_DIR)/libc/%.o: $(KERNEL_DIR)/libc/%.c
 	clang --target=x86_64-elf \
 		$(X86_CFLAGS) \
 		-c $<  \
@@ -80,7 +87,9 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/isr.o \
 	$(X86_BUILD_DIR)/pic.o \
 	$(X86_BUILD_DIR)/boot/limine.o \
-	$(X86_BUILD_DIR)/memory_manager/pmm.o
+	$(X86_BUILD_DIR)/memory_manager/pmm.o \
+	$(X86_BUILD_DIR)/libc/string.o \
+	$(X86_BUILD_DIR)/vmm.o
 
 link_kernel_x86: $(X86_OBJS)
 	ld.lld \

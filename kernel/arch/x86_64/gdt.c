@@ -44,7 +44,7 @@ void load_gdt(gdtr* registry) {
 
 void gdt_init()
 {
-    k_log("Initializing GDT");
+    k_log("[GDT] Initializing GDT");
     static gdt_entry_t gdt_table[3];
     static gdtr registry;
     gdt_table[0] = create_gdt_entry((gdt){0, 0, 0, 0});            // NULL Descriptor
@@ -57,7 +57,7 @@ void gdt_init()
     
     load_gdt(&registry);
     flush_gdt();
-    k_log("GDT initialized!");
+    k_log("[GDT] GDT initialized!");
 
 }
 
