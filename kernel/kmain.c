@@ -4,6 +4,7 @@
 #include "boot.h"
 #include "pmm.h"
 #include "vmm.h"
+#include "kmalloc.h"
 
 static volatile LIMINE_BASE_REVISION(2);
 
@@ -18,7 +19,13 @@ void kmain(void) {
     arch_init();
     pmm_init(info.regions, info.region_count, info.hhdm_offset);
     vmm_init(info.kernel_physical_addr, info.kernel_virtual_addr, info.hhdm_offset);
-    
+    kmalloc_init();
+
+    void *ptr = kmalloc(8192);
+    k_log("[TEST] kmalloc returned %x", (uint64_t)ptr);
+    void *ptr2 = kmalloc(100);
+    k_log("[TEST] kmalloc returned %x", (uint64_t)ptr2);
+
     // paddr_t f1 = pmm_alloc();
     // pmm_free(f1);
     // paddr_t f2 = pmm_alloc();

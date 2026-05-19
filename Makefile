@@ -89,7 +89,8 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/boot/limine.o \
 	$(X86_BUILD_DIR)/memory_manager/pmm.o \
 	$(X86_BUILD_DIR)/libc/string.o \
-	$(X86_BUILD_DIR)/vmm.o
+	$(X86_BUILD_DIR)/vmm.o \
+	$(X86_BUILD_DIR)/memory_manager/kmalloc.o
 
 link_kernel_x86: $(X86_OBJS)
 	ld.lld \

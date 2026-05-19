@@ -18,5 +18,5 @@ _start:
 section .bss
 align 16
 k_stack_bottom:
-    resb 16384 ; 16 KiB stack
+    resb 262144 ; 16 KiB stack
 k_stack_top:

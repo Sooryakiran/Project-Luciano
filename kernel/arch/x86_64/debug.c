@@ -81,6 +81,28 @@ void k_printf_b(uint64_t n) {
     }
 }
 
+void k_printf_x(uint64_t n) {
+
+    char buf[64];
+    const char *char_map = "0123456789abcdef";
+    // char char_map[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    
+    if (n == 0) {
+        k_putc('0');
+        return;
+    }
+    int i = 0;
+    while (n > 0)
+    {
+        buf[i++] = char_map[(n % 16)];
+        n >>= 4;
+    }
+    while(i--) {
+        k_putc(buf[i]);
+    }
+}
+
+
 void k_printf(const char *s, va_list args)
 {
     while (*s)
@@ -114,6 +136,15 @@ void k_printf(const char *s, va_list args)
                 uint64_t n;
                 n = va_arg(args, uint64_t);
                 k_printf_b(n);
+                s++;
+                break;
+            }
+
+            case 'x':
+            {
+                uint64_t n;
+                n = va_arg(args, uint64_t);
+                k_printf_x(n);
                 s++;
                 break;
             }
