@@ -1,7 +1,8 @@
 #include "pmm.h"
-#include "vmm.h"
 #include "debug.h"
 #include "string.h"
+#include "vmm.h"
+
 
 #define PML4_IDX(va) (((va) >> 39) & 0x1FF)
 #define PDPT_IDX(va) (((va) >> 30) & 0x1FF)
@@ -22,6 +23,8 @@
 extern char __bss_end;
 
 static uint64_t vmm_hhdm_offset;
+
+typedef uint64_t vmm_page_entry;
 
 void vmm_init(
     paddr_t kernel_physical_addr,
@@ -58,24 +61,25 @@ void vmm_init(
     k_log("[VMM] Paging Initialized");
 }
 
-vmm_page_entry *vmm_create_pml4() {
+address_space_t vmm_create() {
     k_log("[VMM] Creating new PML4");
     vmm_page_entry* pml4 = (vmm_page_entry*)(pmm_alloc() + vmm_hhdm_offset);
     memset(pml4, 0, PMM_FRAME_SIZE);
-    vmm_page_entry* current_pml4 = vmm_get_current_pml4();
+    vmm_page_entry* current_pml4 = vmm_get_current_space();
 
     memcpy(&pml4[K_PAGE_START], &current_pml4[K_PAGE_START], (K_PAGE_END - K_PAGE_START) * sizeof(vmm_page_entry));
-    return pml4;
+    return (address_space_t)pml4;
 }
 
-vmm_page_entry *vmm_get_current_pml4() {
+address_space_t vmm_get_current_space() {
     uint64_t phys;
     asm volatile("mov %%cr3, %0" : "=r"(phys));
-    return (vmm_page_entry*)(phys + vmm_hhdm_offset);
+    return (address_space_t)(vmm_page_entry*)(phys + vmm_hhdm_offset);
 }
 
-void vmm_map(vmm_page_entry *pml4, vaddr_t virtual_addr, paddr_t physical_addr, uint8_t flags)
-{
+void vmm_map(address_space_t address_space, vaddr_t virtual_addr, paddr_t physical_addr, uint8_t flags)
+{   
+    vmm_page_entry *pml4 = (vmm_page_entry*) address_space;
     uint64_t pml4_idx = PML4_IDX(virtual_addr);
     uint64_t pdpt_idx = PDPT_IDX(virtual_addr);
     uint64_t pd_idx = PD_IDX(virtual_addr);
@@ -117,8 +121,9 @@ void vmm_map(vmm_page_entry *pml4, vaddr_t virtual_addr, paddr_t physical_addr, 
     }
 }
 
-paddr_t vmm_get_paddr(vmm_page_entry *pml4, vaddr_t virtual_addr)
+paddr_t vmm_get_paddr(address_space_t address_space, vaddr_t virtual_addr)
 {
+    vmm_page_entry *pml4 = (vmm_page_entry *)address_space;
     uint64_t pml4_idx = PML4_IDX(virtual_addr);
     uint64_t pdpt_idx = PDPT_IDX(virtual_addr);
     uint64_t pd_idx = PD_IDX(virtual_addr);
@@ -144,8 +149,9 @@ paddr_t vmm_get_paddr(vmm_page_entry *pml4, vaddr_t virtual_addr)
     return pt_entry & ADDRESS_MASK;
 }
 
-void vmm_switch(vmm_page_entry *pml4)
+void vmm_switch(address_space_t address_space)
 {
+    vmm_page_entry *pml4 = (vmm_page_entry *)address_space;
     uint64_t physical_addr = (uint64_t)pml4 - vmm_hhdm_offset;
     asm volatile(
         "mov %0, %%cr3"      // %0 = first input, %% escapes to literal % for registers
@@ -155,8 +161,9 @@ void vmm_switch(vmm_page_entry *pml4)
     );
 }
 
-void vmm_unmap(vmm_page_entry *pml4, vaddr_t virtual_addr)
+void vmm_unmap(address_space_t address_space, vaddr_t virtual_addr)
 {
+    vmm_page_entry *pml4 = (vmm_page_entry *)address_space;
     uint64_t pml4_idx = PML4_IDX(virtual_addr);
     uint64_t pdpt_idx = PDPT_IDX(virtual_addr);
     uint64_t pd_idx = PD_IDX(virtual_addr);

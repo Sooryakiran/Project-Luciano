@@ -18,6 +18,7 @@ void kmain(void) {
     arch_init();
     pmm_init(info.regions, info.region_count, info.hhdm_offset);
     vmm_init(info.kernel_physical_addr, info.kernel_virtual_addr, info.hhdm_offset);
+    
     // paddr_t f1 = pmm_alloc();
     // pmm_free(f1);
     // paddr_t f2 = pmm_alloc();
