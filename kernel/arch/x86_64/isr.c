@@ -9,25 +9,16 @@ void timer_handler();
 void keyboard_handler();
 
 void exception_handler(uint64_t vector, uint64_t error_code) {
-    char msg[3];
-    msg[0] = "0123456789ABCDEF"[(vector >> 4) & 0xF];
-    msg[1] = "0123456789ABCDEF"[vector & 0xF];
-    msg[2] = '\0';
-
-    char err_msg[3];
-    err_msg[0] = "0123456789ABCDEF"[(error_code >> 4) & 0xF];
-    err_msg[1] = "0123456789ABCDEF"[error_code & 0xF];
-    err_msg[2] = '\0';
-
     if (vector >= 32 && vector <= 47) {
         irq_handler(vector);
         return;
     }
+    uint64_t cr2;
+    asm volatile("mov %%cr2, %0" : "=r"(cr2));
     
-    k_log("[ISR] vector");
-    k_log(msg);
-    k_log("[ISR] error code");
-    k_log(err_msg);
+    k_log("[ISR] vector %lu (0x%x)", vector, vector);
+    k_log("[ISR] error code %lu (0x%x)", error_code, error_code);
+    k_log("[ISR] cr2 = %x", cr2);
     k_panic("[ISR] exception occured");
     while (1) {}
 }

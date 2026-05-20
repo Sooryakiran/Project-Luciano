@@ -10,3 +10,4 @@ paddr_t vmm_get_paddr(address_space_t, vaddr_t);
 address_space_t vmm_get_current_space();
 address_space_t vmm_create();
 void vmm_switch(address_space_t);
+void vmm_destroy(address_space_t);
