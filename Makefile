@@ -38,49 +38,36 @@ x_86_setup: setup
 	mkdir -p $(X86_BUILD_DIR)/memory_manager
 	mkdir -p $(X86_BUILD_DIR)/libc
 	mkdir -p $(X86_BUILD_DIR)/process
+	mkdir -p $(X86_BUILD_DIR)/drivers
 
+X86_CLANG = clang --target=x86_64-elf $(X86_CFLAGS) -c $< -o $@
 
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/%.c
-	clang --target=x86_64-elf \
-		$(X86_CFLAGS) \
-		-c $<  \
-		-o $@
+	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/memory_manager/%.o: $(KERNEL_DIR)/memory_manager/%.c
-	clang --target=x86_64-elf \
-		$(X86_CFLAGS) \
-		-c $<  \
-		-o $@
+	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/process/%.o: $(KERNEL_DIR)/process/%.c
-	clang --target=x86_64-elf \
-		$(X86_CFLAGS) \
-		-c $<  \
-		-o $@
+	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/libc/%.o: $(KERNEL_DIR)/libc/%.c
-	clang --target=x86_64-elf \
-		$(X86_CFLAGS) \
-		-c $<  \
-		-o $@
+	$(X86_CLANG)
+
+$(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/%.c
+	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.asm
 	nasm -f elf64 $< -o $@
 
-X86_CLANG = clang --target=x86_64-elf $(X86_CFLAGS) -c $< -o $@
-
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.c
-	clang --target=x86_64-elf \
-		$(X86_CFLAGS) \
-		-c $<  \
-		-o $@
+	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/boot/%.o: $(KERNEL_DIR)/arch/x86_64/boot/%.c
-	@echo "Compiling $< -> $@"
-	clang --target=x86_64-elf \
-		$(X86_CFLAGS) \
-		-c $<  \
-		-o $@
+	$(X86_CLANG)
+
+$(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/framebuffer/%.c
+	$(X86_CLANG)
 
 X86_OBJS = \
 	$(X86_BUILD_DIR)/kmain.o \
@@ -99,7 +86,10 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/vmm.o \
 	$(X86_BUILD_DIR)/memory_manager/kmalloc.o \
 	$(X86_BUILD_DIR)/process/process.o \
-	$(X86_BUILD_DIR)/process.o
+	$(X86_BUILD_DIR)/process.o \
+	$(X86_BUILD_DIR)/drivers/drivers.o \
+	$(X86_BUILD_DIR)/drivers/fb.o \
+
 
 link_kernel_x86: $(X86_OBJS)
 	ld.lld \

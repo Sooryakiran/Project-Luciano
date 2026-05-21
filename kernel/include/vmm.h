@@ -3,7 +3,7 @@
 
 typedef void* address_space_t;
 
-void vmm_init(paddr_t, vaddr_t, uint64_t);
+void vmm_init(paddr_t, vaddr_t, uint64_t, mem_region *, size_t);
 void vmm_map(address_space_t, vaddr_t, paddr_t, uint8_t);
 void vmm_unmap(address_space_t, vaddr_t);
 paddr_t vmm_get_paddr(address_space_t, vaddr_t);

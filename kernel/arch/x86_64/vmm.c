@@ -29,7 +29,9 @@ typedef uint64_t vmm_page_entry;
 void vmm_init(
     paddr_t kernel_physical_addr,
     vaddr_t kernel_virtual_addr,
-    uint64_t hhdm_offset)
+    uint64_t hhdm_offset,
+    mem_region *regions,
+    size_t region_count)
 {
 
     k_log("[VMM] Initializing paging...");
@@ -48,13 +50,26 @@ void vmm_init(
 
     uint64_t kernel_virtual_end = (uint64_t)(&__bss_end);
     uint64_t kernel_size = kernel_virtual_end - kernel_virtual_addr;
-    k_log("[VMM] Kernel virtual start is %lu", kernel_virtual_addr);
-    k_log("[VMM] Kernel virtual end is %lu", kernel_virtual_end);
+    k_log("[VMM] Kernel virtual start is %x", kernel_virtual_addr);
+    k_log("[VMM] Kernel virtual end is %x", kernel_virtual_end);
     k_log("[VMM] Kernel size is %lu", kernel_size);
 
     for (uint64_t offset = 0; offset < kernel_size; offset += PMM_FRAME_SIZE)
     {
         vmm_map(pml4, kernel_virtual_addr + offset, kernel_physical_addr + offset, 0x3);
+    }
+
+    k_log("[VMM] Mapping MMIO region...");
+    for(size_t i = 0; i < region_count; i++) {
+        mem_region *region = &regions[i];
+        if (region->type == MEM_USABLE) continue; // already done
+        if (region->type == MEM_KERNEL) continue; // already done
+        if (region->type == MEM_RESERVED) continue;
+        if (region->type == MEM_BAD) continue;
+        
+        for(uint64_t phys = region->offset; phys < region->offset + region->size; phys += PMM_FRAME_SIZE) {
+            vmm_map(pml4, phys + hhdm_offset, phys, 0x3);
+        }
     }
 
     k_log("[VMM] Kernel mapping done!");

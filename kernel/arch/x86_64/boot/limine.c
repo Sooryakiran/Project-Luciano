@@ -39,6 +39,14 @@ get_type(uint64_t limine_type)
         return MEM_USABLE;
     case LIMINE_MEMMAP_KERNEL_AND_MODULES:
         return MEM_KERNEL;
+    case LIMINE_MEMMAP_FRAMEBUFFER:
+        return MEM_FRAMEBUFFER;
+    case LIMINE_MEMMAP_ACPI_RECLAIMABLE:
+        return MEM_ACPI;
+    case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE:
+        return MEM_BOOTLOADER;
+    case LIMINE_MEMMAP_BAD_MEMORY:
+        return MEM_BAD;
     default:
         return MEM_RESERVED;
     }
@@ -92,7 +100,9 @@ void get_boot_entry(boot_info *info)
     }
     else
     {
-        info->framebuffer_count = min(MAX_FRAMEBUFFERS, fb_request.response->framebuffer_count);
+        info->framebuffer_count = fb_request.response->framebuffer_count;
+        if (info->framebuffer_count > MAX_FRAMEBUFFERS)
+            info->framebuffer_count = MAX_FRAMEBUFFERS;
         for (int i = 0; i < info->framebuffer_count; i++)
         {
             struct limine_framebuffer *fb = fb_request.response->framebuffers[i];

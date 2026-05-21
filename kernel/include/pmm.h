@@ -7,7 +7,11 @@
 typedef enum {
     MEM_USABLE,
     MEM_RESERVED,
-    MEM_KERNEL
+    MEM_KERNEL, 
+    MEM_BAD,
+    MEM_FRAMEBUFFER,
+    MEM_ACPI,
+    MEM_BOOTLOADER
 } mem_region_type;
 
 typedef struct {

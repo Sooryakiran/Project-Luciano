@@ -18,14 +18,11 @@ process_t *create_process(vaddr_t entry_point, address_space_t address_space)
     new_process->address_space = address_space;
     new_process->state = PROCESS_READY;
 
-    k_log("Entry point is %x", entry_point);
     uint8_t *stack_base = kmalloc(KERNEL_STACK_SIZE);
     new_process->stack_base = (vaddr_t)stack_base;
 
-    k_log("stack top = %x", (uint64_t)(stack_base + KERNEL_STACK_SIZE));
 
     uint64_t *stack = (uint64_t *)(stack_base + KERNEL_STACK_SIZE);
-    k_log("entry stored at = %x", (uint64_t)(stack - 1));
     stack--;
     *stack = entry_point;
 
@@ -34,9 +31,8 @@ process_t *create_process(vaddr_t entry_point, address_space_t address_space)
     memset(stack, 0, 6 * sizeof(uint64_t));
 
     new_process->rsp = (vaddr_t)stack;
-    k_log("rsp = %x", new_process->rsp);
     process_table[new_process->pid] = new_process;
-    k_log("Process created with pid %d", new_process->pid);
+    k_log("[PROCESS] Process created with pid %d", new_process->pid);
     return new_process;
 }
 

@@ -9,7 +9,7 @@ uint64_t get_total_memory_size(mem_region *regions, size_t count)
     uint64_t top = 0;
     for (size_t i = 0; i < count; i++)
     {
-        if (regions[i].type == MEM_RESERVED) continue;
+        if (!(regions[i].type == MEM_USABLE || regions[i].type == MEM_KERNEL)) continue;
         uint64_t end_region = regions[i].offset + regions[i].size;
         if (end_region > top)
             top = end_region;
