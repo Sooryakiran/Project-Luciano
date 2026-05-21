@@ -74,6 +74,7 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/boot.o \
 	$(X86_BUILD_DIR)/debug.o \
 	$(X86_BUILD_DIR)/arch.o \
+	$(X86_BUILD_DIR)/pit.o \
 	$(X86_BUILD_DIR)/gdt.o \
 	$(X86_BUILD_DIR)/gdt_flush.o \
 	$(X86_BUILD_DIR)/idt.o \
