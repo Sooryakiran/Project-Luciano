@@ -8,6 +8,7 @@
 #include "process.h"
 #include "drivers.h"
 #include "drivers/framebuffer/fb.h"
+#include "drivers/framebuffer/font8x16.h"
 
 static volatile LIMINE_BASE_REVISION(2);
 
@@ -51,11 +52,11 @@ void kmain(void)
     }
 
     fb_fill_rect(0, 30, 10, 100, 200, 0x00FFF0AB);
-
-    void *ptr = kmalloc(8192);
-    k_log("[TEST] kmalloc returned %x", (uint64_t)ptr);
-    void *ptr2 = kmalloc(100);
-    k_log("[TEST] kmalloc returned %x", (uint64_t)ptr2);
+    fb_putchar(0, 0, 0, 'a', 0x00FFF0AB, 0x00FF0000, font_8x16_get());
+    // void *ptr = kmalloc(8192);
+    // k_log("[TEST] kmalloc returned %x", (uint64_t)ptr);
+    // void *ptr2 = kmalloc(100);
+    // k_log("[TEST] kmalloc returned %x", (uint64_t)ptr2);
 
     // in kmain or wherever:
     // address_space_t current_address_space = vmm_get_current_space();

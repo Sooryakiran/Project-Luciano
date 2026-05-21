@@ -89,6 +89,7 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/process.o \
 	$(X86_BUILD_DIR)/drivers/drivers.o \
 	$(X86_BUILD_DIR)/drivers/fb.o \
+	$(X86_BUILD_DIR)/drivers/fonts8x16.o
 
 
 link_kernel_x86: $(X86_OBJS)
@@ -116,7 +117,8 @@ emulate_x86:
 	qemu-system-x86_64 \
     -cdrom $(ISO_NAME) \
     -serial stdio \
-    -m 256M
+	-display cocoa,zoom-to-fit=on \
+    -m 256M 
 
 X86_TEST_SRCS = $(wildcard $(X86_TEST_DIR)/*.c)
 X86_TEST_BINS = $(patsubst $(X86_TEST_DIR)/%.c, $(X86_TEST_BUILD_DIR)/%, $(X86_TEST_SRCS))
