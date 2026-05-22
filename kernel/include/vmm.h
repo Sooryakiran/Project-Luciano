@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "pmm.h"
 
 typedef void* address_space_t;
 

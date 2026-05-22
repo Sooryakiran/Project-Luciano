@@ -99,8 +99,11 @@ isr_no_err_stub 29
 isr_err_stub    30
 isr_no_err_stub 31
 
+; Timer special case
+extern isr_stub_32
+
 ; IRQ handlers
-%assign i 32
+%assign i 33
 %rep 224
     isr_no_err_stub i
     %assign i i+1

@@ -2,6 +2,7 @@
 #include "types.h"
 #include "arch/x86_64/pic.h"
 #include "arch/x86_64/io.h"
+#include "scheduler.h"
 
 void exception_handler(uint64_t, uint64_t);
 void irq_handler(uint64_t);
@@ -24,6 +25,8 @@ void exception_handler(uint64_t vector, uint64_t error_code) {
 }
 
 void irq_handler(uint64_t vector) {
+    pic_eoi(vector);
+
     switch (vector)
     {
     case 32:
@@ -35,12 +38,13 @@ void irq_handler(uint64_t vector) {
     default:
         break;
     }
-    pic_eoi(vector);
 
 }
 
 void timer_handler() {
     // k_log("Timer Interrupt");
+    process_t *current_out, *next_out;
+    scheduler_tick(&current_out, &next_out);
 }
 
 void keyboard_handler() {

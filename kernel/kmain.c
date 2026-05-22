@@ -9,24 +9,39 @@
 #include "drivers.h"
 #include "drivers/framebuffer/fb.h"
 #include "drivers/framebuffer/font8x16.h"
+#include "scheduler.h"
 
 static volatile LIMINE_BASE_REVISION(2);
 
 __attribute__((noinline)) void process_a()
 {
+    k_log("A STARTING....");
+    uint8_t i = 0;
     while (1)
     {
-        k_log("A\n");
+        i += 1;
+        k_log("A%d", i);
     }
 }
 
 __attribute__((noinline)) void process_b()
 {
+    k_log("B starting....");
     while (1)
     {
-        k_log("B\n");
+        k_log("B");
     }
 }
+
+__attribute__((noinline)) void process_c()
+{
+    k_log("C starting....");
+    while (1)
+    {
+        k_log("C");
+    }
+}
+
 
 void kmain(void)
 {
@@ -42,6 +57,21 @@ void kmain(void)
     vmm_init(info.kernel_physical_addr, info.kernel_virtual_addr, info.hhdm_offset, info.regions, info.region_count);
     kmalloc_init();
     drivers_init(&info);
+    scheduler_init();
+
+    address_space_t curr_space = vmm_get_current_space();
+    process_t *proc_a = create_process((vaddr_t)&process_a, curr_space);
+    process_t *proc_b = create_process((vaddr_t)&process_b, curr_space);
+    process_t *proc_c = create_process((vaddr_t)&process_c, curr_space);
+
+    scheduler_add(proc_a);
+    scheduler_add(proc_b);
+    scheduler_add(proc_c);
+    // scheduler_start();
+
+
+    // process_switch(proc_a, proc_b);
+
 
     fb_draw_pixel(0, 100, 100, 0x00FF0000);
     // draw a pattern to confirm x/y orientation
@@ -53,18 +83,7 @@ void kmain(void)
 
     fb_fill_rect(0, 30, 10, 100, 200, 0x00FFF0AB);
     fb_putchar(0, 0, 0, 'a', 0x00FFF0AB, 0x00FF0000, font_8x16_get());
-    // void *ptr = kmalloc(8192);
-    // k_log("[TEST] kmalloc returned %x", (uint64_t)ptr);
-    // void *ptr2 = kmalloc(100);
-    // k_log("[TEST] kmalloc returned %x", (uint64_t)ptr2);
-
-    // in kmain or wherever:
-    // address_space_t current_address_space = vmm_get_current_space();
-    // process_t *a = create_process((vaddr_t)process_a, current_address_space);
-    // process_t *b = create_process((vaddr_t)process_b, current_address_space);
-
-    // process_switch(a, b); // should start printing B
-
+    
     for (;;)
     {
     }

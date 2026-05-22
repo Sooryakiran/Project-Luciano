@@ -79,6 +79,7 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/gdt_flush.o \
 	$(X86_BUILD_DIR)/idt.o \
 	$(X86_BUILD_DIR)/isr_table.o \
+	$(X86_BUILD_DIR)/isr_timer.o \
 	$(X86_BUILD_DIR)/isr.o \
 	$(X86_BUILD_DIR)/pic.o \
 	$(X86_BUILD_DIR)/boot/limine.o \
@@ -90,7 +91,8 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/process.o \
 	$(X86_BUILD_DIR)/drivers/drivers.o \
 	$(X86_BUILD_DIR)/drivers/fb.o \
-	$(X86_BUILD_DIR)/drivers/fonts8x16.o
+	$(X86_BUILD_DIR)/drivers/fonts8x16.o \
+	$(X86_BUILD_DIR)/process/scheduler.o
 
 
 link_kernel_x86: $(X86_OBJS)
