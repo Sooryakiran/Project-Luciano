@@ -93,7 +93,8 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/drivers/drivers.o \
 	$(X86_BUILD_DIR)/drivers/fb.o \
 	$(X86_BUILD_DIR)/drivers/fonts8x16.o \
-	$(X86_BUILD_DIR)/process/scheduler.o 
+	$(X86_BUILD_DIR)/process/scheduler.o \
+	$(X86_BUILD_DIR)/tss.o
 
 
 link_kernel_x86: $(X86_OBJS)

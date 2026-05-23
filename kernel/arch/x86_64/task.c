@@ -16,7 +16,7 @@ task_t *task_create(process_t *process, vaddr_t entry_point, uint8_t is_user)
         return NULL;
     }
 
-    k_log("[TASK] Creating task");
+    k_log("[TASK] Creating task in process pid: %d", process->pid);
     task_t *task = (task_t *)kmalloc(sizeof(task_t));
     task->tid = next_tid++;
     task->process = process;

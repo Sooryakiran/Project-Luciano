@@ -1,6 +1,7 @@
 #include "types.h"
 #include "debug.h"
 #include "arch/x86_64/gdt.h"
+#include "arch/x86_64/tss.h"
 
 // reference for myself: https://wiki.osdev.org/Global_Descriptor_Table
 
@@ -42,22 +43,30 @@ void load_gdt(gdtr* registry) {
     asm volatile ("lgdt %0" : : "m"(*registry));
 }
 
+void load_task_register() {
+    asm volatile("ltr %0" :: "r"((uint16_t)0x28));
+}
+
 void gdt_init()
 {
     k_log("[GDT] Initializing GDT");
-    static gdt_entry_t gdt_table[5];
+    static gdt_entry_t gdt_table[7];
     static gdtr registry;
+    uint64_t tss_address = (uint64_t)tss_get();
     gdt_table[0] = create_gdt_entry((gdt){0, 0, 0, 0});            // NULL Descriptor
     gdt_table[1] = create_gdt_entry((gdt){0, 0xFFFFF, 0x9a, 0xa}); // Kernel code, all
     gdt_table[2] = create_gdt_entry((gdt){0, 0xFFFFF, 0x92, 0xc}); // Kernel data, all
     gdt_table[3] = create_gdt_entry((gdt){0, 0xFFFFF, 0xfa, 0xa});
     gdt_table[4] = create_gdt_entry((gdt){0, 0xFFFFF, 0xf2, 0xc});
+    gdt_table[5] = create_gdt_entry((gdt){(uint32_t)(tss_address & 0xFFFFFFFF), sizeof(tss_t) - 1, 0x89, 0x0});
+    gdt_table[6] = (gdt_entry_t)(tss_address >> 32);
 
     registry.offset = (uint64_t)gdt_table;
     registry.size = sizeof(gdt_table) - 1;
     
     load_gdt(&registry);
     flush_gdt();
+    load_task_register();
     k_log("[GDT] GDT initialized!");
 
 }
