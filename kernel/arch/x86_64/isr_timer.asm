@@ -46,11 +46,13 @@ isr_stub_32:
     push r14
     push r15
 
-    mov [rdi + 0x18], rsp    ; current->rsp
-    mov rbx, rsi
-    mov rdi, [rsi + 0x08]    ; next->address_space
+    ; rdi is current_task rsi is next_task
+    mov [rdi], rsp    ; current->rsp
+    mov rbx, rsi               
+    mov rbp, [rsi + 0x08]    ; rbp is next->process
+    mov rdi, [rbp + 0x08]
     call vmm_switch
-    mov rsp, [rbx + 0x18]    ; next->rsp
+    mov rsp, [rbx + 0x0]    ; next->rsp
 
     pop r15
     pop r14

@@ -1,7 +1,8 @@
 #pragma once
 #include "process.h"
+#include "task.h"
 
 void scheduler_init();
-uint8_t scheduler_tick(process_t **current, process_t **next);
+uint8_t scheduler_tick(task_t **current, task_t **next);
 void scheduler_start();
-void scheduler_add(process_t *process);
+void scheduler_add(task_t *process);

@@ -20,7 +20,7 @@ __attribute__((noinline)) void process_a()
     while (1)
     {
         i += 1;
-        // k_log("A%d", i);
+        k_log("A%d", i);
     }
 }
 
@@ -29,7 +29,7 @@ __attribute__((noinline)) void process_b()
     k_log("B starting....");
     while (1)
     {
-        // k_log("B");
+        k_log("B");
     }
 }
 
@@ -38,7 +38,7 @@ __attribute__((noinline)) void process_c()
     k_log("C starting....");
     while (1)
     {
-        // k_log("C");
+        k_log("C");
     }
 }
 
@@ -65,9 +65,9 @@ void kmain(void)
     process_t *proc_b = create_process((vaddr_t)&process_b, curr_space);
     process_t *proc_c = create_process((vaddr_t)&process_c, c_space);
 
-    scheduler_add(proc_a);
-    scheduler_add(proc_b);
-    scheduler_add(proc_c);
+    scheduler_add(proc_a->tasks[0]);
+    scheduler_add(proc_b->tasks[0]);
+    scheduler_add(proc_c->tasks[0]);
     // scheduler_start();
 
 
