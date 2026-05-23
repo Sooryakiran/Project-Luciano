@@ -8,6 +8,7 @@ extern scheduler_tick
 extern pic_eoi
 extern vmm_switch
 extern process_switch
+extern tss_update
 
 ; timer would need low stack depth so that i can 
 ; switch process easily
@@ -53,6 +54,10 @@ isr_stub_32:
     mov rdi, [rbp + 0x08]
     call vmm_switch
     mov rsp, [rbx + 0x0]    ; next->rsp
+    
+    ; update tss
+    mov rdi, [rbx + 0x18]    ; next->kernel_stack_top
+    call tss_update
 
     pop r15
     pop r14

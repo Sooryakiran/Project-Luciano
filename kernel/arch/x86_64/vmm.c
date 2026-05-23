@@ -108,9 +108,7 @@ void vmm_map(address_space_t address_space, vaddr_t virtual_addr, paddr_t physic
     if (!ENTRY_PRESENT(pml4_entry))
     {
         // address is already 4kb aligned (first 12 bits 0)
-        // 0x3 present and RW flag
-        // TODO: change flags in userspace mappings
-        pml4[pml4_idx] = pmm_alloc() | 0x3;
+        pml4[pml4_idx] = pmm_alloc() | flags;
     }
 
     // PDPT walking
@@ -118,7 +116,7 @@ void vmm_map(address_space_t address_space, vaddr_t virtual_addr, paddr_t physic
     vmm_page_entry pdpt_entry = pdpt[pdpt_idx];
     if (!ENTRY_PRESENT(pdpt_entry))
     {
-        pdpt[pdpt_idx] = pmm_alloc() | 0x3;
+        pdpt[pdpt_idx] = pmm_alloc() | flags;
     }
 
     // PD walking
@@ -126,7 +124,7 @@ void vmm_map(address_space_t address_space, vaddr_t virtual_addr, paddr_t physic
     vmm_page_entry pd_entry = pd[pd_idx];
     if (!ENTRY_PRESENT(pd_entry))
     {
-        pd[pd_idx] = pmm_alloc() | 0x3;
+        pd[pd_idx] = pmm_alloc() | flags;
     }
 
     // PT walking

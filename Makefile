@@ -5,6 +5,8 @@ KERNEL_DIR := kernel
 LIMINE_DIR := bootloader/limine
 LIMINE_CONF := bootloader/limine.conf
 
+OBJCOPY = /opt/homebrew/opt/binutils/bin/objcopy
+
 LIMINE_BRANCH := v8.x-binary
 
 X86_BUILD_DIR := $(BUILD_DIR)/x86_64
@@ -94,10 +96,17 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/drivers/fb.o \
 	$(X86_BUILD_DIR)/drivers/fonts8x16.o \
 	$(X86_BUILD_DIR)/process/scheduler.o \
-	$(X86_BUILD_DIR)/tss.o
+	$(X86_BUILD_DIR)/tss.o \
+	$(X86_BUILD_DIR)/user/bin/loop.o
 
 
-link_kernel_x86: $(X86_OBJS)
+user_bin_x86:
+	mkdir -p $(X86_BUILD_DIR)/user/bin
+	nasm -f bin user/loop_app/loop.asm -o $(X86_BUILD_DIR)/user/bin/loop.bin
+	$(OBJCOPY) -I binary -O elf64-x86-64 -B i386:x86-64 \
+		$(X86_BUILD_DIR)/user/bin/loop.bin $(X86_BUILD_DIR)/user/bin/loop.o
+
+link_kernel_x86: $(X86_OBJS) user_bin_x86
 	ld.lld \
     -T $(KERNEL_DIR)/linker.ld \
     -o $(X86_BUILD_DIR)/kernel.elf \

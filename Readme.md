@@ -2,3 +2,4 @@
 Install NASM
 
 xorriso
+objcopy
