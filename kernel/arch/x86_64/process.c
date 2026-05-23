@@ -3,7 +3,6 @@
 #include "kmalloc.h"
 #include "string.h"
 
-
 process_t *create_process(vaddr_t entry_point, address_space_t address_space)
 {
     k_log("[PROCESS] Creating process");

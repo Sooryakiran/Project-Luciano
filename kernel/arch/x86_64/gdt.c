@@ -45,12 +45,13 @@ void load_gdt(gdtr* registry) {
 void gdt_init()
 {
     k_log("[GDT] Initializing GDT");
-    static gdt_entry_t gdt_table[3];
+    static gdt_entry_t gdt_table[5];
     static gdtr registry;
     gdt_table[0] = create_gdt_entry((gdt){0, 0, 0, 0});            // NULL Descriptor
     gdt_table[1] = create_gdt_entry((gdt){0, 0xFFFFF, 0x9a, 0xa}); // Kernel code, all
     gdt_table[2] = create_gdt_entry((gdt){0, 0xFFFFF, 0x92, 0xc}); // Kernel data, all
-    // todo: after user mode, and after interrupts
+    gdt_table[3] = create_gdt_entry((gdt){0, 0xFFFFF, 0xfa, 0xa});
+    gdt_table[4] = create_gdt_entry((gdt){0, 0xFFFFF, 0xf2, 0xc});
 
     registry.offset = (uint64_t)gdt_table;
     registry.size = sizeof(gdt_table) - 1;

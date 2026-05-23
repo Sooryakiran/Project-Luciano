@@ -34,15 +34,6 @@ void scheduler_add(process_t *process) {
 }
 
 void scheduler_start() {
-    // k_log("{STARTING}");
-    // static process_t dummy; // fake current, rsp will be overwritten, never restored
-    // process_t *first = queue[0];
-    // current_idx = 0;
-    // first->state = PROCESS_RUNNING;
-    // scheduler_running = 1;
-    // scheduler_tick();
-    // scheduler_tick();
-    // process_switch(&dummy, first);
 }
 
 uint8_t scheduler_tick(process_t **current_out, process_t **next_out) {
