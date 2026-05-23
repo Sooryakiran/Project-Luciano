@@ -89,10 +89,11 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/memory_manager/kmalloc.o \
 	$(X86_BUILD_DIR)/process/process.o \
 	$(X86_BUILD_DIR)/process.o \
+	$(X86_BUILD_DIR)/task.o \
 	$(X86_BUILD_DIR)/drivers/drivers.o \
 	$(X86_BUILD_DIR)/drivers/fb.o \
 	$(X86_BUILD_DIR)/drivers/fonts8x16.o \
-	$(X86_BUILD_DIR)/process/scheduler.o
+	$(X86_BUILD_DIR)/process/scheduler.o 
 
 
 link_kernel_x86: $(X86_OBJS)

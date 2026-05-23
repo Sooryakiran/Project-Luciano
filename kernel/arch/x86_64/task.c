@@ -2,6 +2,8 @@
 #include "process.h"
 #include "types.h"
 #include "debug.h"
+#include "kmalloc.h"
+#include "string.h"
 
 uint64_t next_tid = 1;
 
@@ -39,6 +41,8 @@ task_t *task_create(process_t *process, vaddr_t entry_point, uint8_t is_user)
     memset(stack, 0, 6 * sizeof(uint64_t));
 
     task->stack_pointer = (vaddr_t)stack;
+    task->state = TASK_READY;
+
     return task;
 }
 
