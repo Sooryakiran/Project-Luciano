@@ -64,10 +64,10 @@ uint8_t scheduler_tick(task_t **current_out, task_t **next_out)
         current = queue[current_idx];
     }
 
-    if (current->process->privilege == PRIVILEGE_USER)
-    {
-        k_log("[SCH] running user task tid=%d", current->tid);
-    }
+    // if (current->process->privilege == PRIVILEGE_USER)
+    // {
+    //     k_log("[SCH] running user task tid=%d", current->tid);
+    // }
     
     current_idx = (current_idx + 1) % queue_length;
     task_t *next = queue[current_idx];
@@ -75,7 +75,7 @@ uint8_t scheduler_tick(task_t **current_out, task_t **next_out)
         return 0;
     current->state = TASK_READY;
     next->state = TASK_RUNNING;
-    // k_log("[SCH] Scheduler going to switch from (pid, tid) (%d, %d) to (%d, %d)", current->process->pid, current->tid, next->process->pid, next->tid);
+    k_log("[SCH] Scheduler going to switch from (pid, tid) (%d, %d) to (%d, %d)", current->process->pid, current->tid, next->process->pid, next->tid);
     // process_switch(current, next);
     *current_out = current;
     *next_out = next;

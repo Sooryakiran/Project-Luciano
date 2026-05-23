@@ -2,7 +2,7 @@
 #include "string.h"
 #include "debug.h"
 
-static tss_t tss;
+tss_t tss;
 
 void tss_init() {
     k_log("[TSS] Initializing TSS");
@@ -12,6 +12,7 @@ void tss_init() {
 }
 
 void tss_update(vaddr_t rsp0) {
+    k_log("[TSS] rsp0 = %x", rsp0);
     tss.rsp0 = rsp0;
 }
 

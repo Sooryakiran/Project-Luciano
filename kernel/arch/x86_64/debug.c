@@ -169,6 +169,11 @@ void k_print_format(const char *t, const char *s, va_list args)
     k_print("\n");
 }
 
+void k_log_hex(uint64_t value) 
+{
+    k_log("Value %x", value);
+}
+
 void k_log(const char *s, ...)
 {
     va_list args;

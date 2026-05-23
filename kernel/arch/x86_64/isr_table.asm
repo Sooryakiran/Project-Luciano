@@ -17,6 +17,8 @@ isr_stub_%+%1:
 
     mov rdi, %1
     mov rsi, [rsp + 72]
+    mov rdx, [rsp + 80]   ; RIP
+
     call exception_handler
     
     pop r11
@@ -49,6 +51,7 @@ isr_stub_%+%1:
 
     mov rdi, %1
     mov rsi, 0
+    mov rdx, 0
     call exception_handler
 
     pop r11
