@@ -113,12 +113,13 @@ void user_task_a()
     }
 }
 
+#ifndef UNIT_TEST
 extern uint8_t user_loop_start[];
 extern uint8_t user_loop_end[];
 
 process_t *load_user_loop(boot_info *info)
 {
-    
+
     address_space_t space = vmm_create();
     size_t size = user_loop_end - user_loop_start;
     vaddr_t user_code_va = 0x00400000;
@@ -141,6 +142,7 @@ process_t *load_user_loop(boot_info *info)
     process_add_task(proc, task_2);
     return proc;
 }
+#endif
 
 void kmain(void)
 {
@@ -158,11 +160,13 @@ void kmain(void)
     drivers_init(&info);
     scheduler_init();
 
+#ifndef UNIT_TEST
     address_space_t curr_space = vmm_get_current_space();
     address_space_t c_space = vmm_create();
     process_t *proc_a = create_process((vaddr_t)&process_a, curr_space, PRIVILEGE_KERNEL);
     task_t *task_b = task_create(proc_a, (vaddr_t)&process_b);
     process_add_task(proc_a, task_b);
+
     // process_t *proc_b = create_process((vaddr_t)&process_b, curr_space);
     process_t *proc_c = create_process((vaddr_t)&process_c, c_space, PRIVILEGE_KERNEL);
     process_t *proc_d = create_process((vaddr_t)&process_d, curr_space, PRIVILEGE_KERNEL);
@@ -171,14 +175,13 @@ void kmain(void)
     process_t *user_proc_a = load_user_loop(&info);
     process_t *user_proc_b = load_user_loop(&info);
 
-
     scheduler_add(proc_a->tasks[0]);
     scheduler_add(proc_a->tasks[1]);
     // scheduler_add(proc_b->tasks[0]);
     scheduler_add(proc_c->tasks[0]);
     scheduler_add(proc_d->tasks[0]);
     scheduler_add(proc_e->tasks[0]);
-    
+
     scheduler_add(user_proc_a->tasks[0]);
     scheduler_add(user_proc_a->tasks[1]);
 
@@ -187,7 +190,7 @@ void kmain(void)
 
     // scheduler_add(user_proc_a->tasks[1]);
 
-
+#endif
     // process_switch(proc_a, proc_b);
     scheduler_enable();
     for (;;)

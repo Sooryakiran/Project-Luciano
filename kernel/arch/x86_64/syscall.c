@@ -19,7 +19,11 @@
 
 uint64_t user_rsp_scratch = 0;
 
+#ifndef UNIT_TEST
 extern void syscall_handler();
+#else
+void syscall_handler() {}
+#endif
 
 void sys_yield();
 void sys_exit();
@@ -102,7 +106,6 @@ void sys_exit_group()
     } 
     scheduler_yield();
 }
-
 
 uint64_t sys_getpid() {
     task_t *current_task = scheduler_get_current();

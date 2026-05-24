@@ -4,6 +4,8 @@
 
 #define FREQ_4_MS 4772
 
+#ifndef UNIT_TEST
+
 void pit_init()
 {
     k_log("[PIT] Initializing PIT");
@@ -17,5 +19,11 @@ void pit_init()
         :
         : "a"(divisor)
         :);
-    
 }
+
+#else
+
+void pit_init()
+{
+}
+#endif

@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 
+#ifndef UNIT_TEST
 static inline uint64_t rmsr(uint32_t msr) {
     uint32_t low, high;
     asm volatile("rdmsr" : "=a"(low), "=d"(high) : "c"(msr));
@@ -12,3 +13,15 @@ static inline void wrmsr(uint32_t msr, uint64_t value) {
     uint32_t high = (uint32_t)(value >> 32);
     asm volatile("wrmsr" :: "c"(msr), "a"(low), "d"(high));
 }
+
+#else
+
+static inline uint64_t rmsr(uint64_t msr) {
+    return 0;
+}
+
+static inline void wrmsr(uint32_t msr, uint64_t value) {
+
+}
+
+#endif

@@ -5,7 +5,11 @@ uint16_t IDT_MAX_DESCRIPTORS = 256;
 
 uint16_t GDT_OFFSET_KERNEL_CODE = 0x08;
 
+#ifndef UNIT_TEST
 extern void* isr_stub_table[];
+#else 
+void *isr_stub_table[];
+#endif
 
 idt_entry create_idt_entry(void* offset, uint8_t flags) {
     idt_entry descriptor;
@@ -33,11 +37,26 @@ void idt_init() {
     registry.offset = (uint64_t)idt;
     registry.size = (uint16_t)(sizeof(idt_entry) * 256) - 1;
 
-    __asm__ volatile ("lidt %0" : : "m"(registry));
+    lidt(&registry);
 
     k_log("[IDT] IDT set successfully");
 }
 
+#ifndef UNIT_TEST
+
 void sti() {
     __asm__ volatile ("sti");
 }
+
+void lidt(idtr* registry) {
+    __asm__ volatile ("lidt %0" : : "m"(*registry));
+}
+#else
+void sti() {
+
+}
+
+void lidt(idtr* registry) {
+
+}
+#endif

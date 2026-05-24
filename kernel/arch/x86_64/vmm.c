@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "string.h"
 #include "vmm.h"
+#include "arch/x86_64/crx.h"
 
 #define PML4_IDX(va) (((va) >> 39) & 0x1FF)
 #define PDPT_IDX(va) (((va) >> 30) & 0x1FF)
@@ -20,11 +21,18 @@
 
 // TODO: assumption on page size 4096 and frame size 4096 equal in pmm_alloc()
 
-extern char __bss_end;
+
+#ifndef UNIT_TEST
+    extern char __bss_end;
+#else
+    char __bss_end = 0x8BAD;
+#endif
 
 static uint64_t vmm_hhdm_offset;
 
 typedef uint64_t vmm_page_entry;
+
+void vmm_aux_invlpg(vaddr_t);
 
 void vmm_init(
     paddr_t kernel_physical_addr,
@@ -60,14 +68,20 @@ void vmm_init(
     }
 
     k_log("[VMM] Mapping MMIO region...");
-    for(size_t i = 0; i < region_count; i++) {
+    for (size_t i = 0; i < region_count; i++)
+    {
         mem_region *region = &regions[i];
-        if (region->type == MEM_USABLE) continue; // already done
-        if (region->type == MEM_KERNEL) continue; // already done
-        if (region->type == MEM_RESERVED) continue;
-        if (region->type == MEM_BAD) continue;
-        
-        for(uint64_t phys = region->offset; phys < region->offset + region->size; phys += PMM_FRAME_SIZE) {
+        if (region->type == MEM_USABLE)
+            continue; // already done
+        if (region->type == MEM_KERNEL)
+            continue; // already done
+        if (region->type == MEM_RESERVED)
+            continue;
+        if (region->type == MEM_BAD)
+            continue;
+
+        for (uint64_t phys = region->offset; phys < region->offset + region->size; phys += PMM_FRAME_SIZE)
+        {
             vmm_map(pml4, phys + hhdm_offset, phys, 0x3);
         }
     }
@@ -90,9 +104,7 @@ address_space_t vmm_create()
 
 address_space_t vmm_get_current_space()
 {
-    uint64_t phys;
-    asm volatile("mov %%cr3, %0" : "=r"(phys));
-    return (address_space_t)(vmm_page_entry *)(phys + vmm_hhdm_offset);
+    return (address_space_t)(vmm_page_entry *)(crx_read_cr3() + vmm_hhdm_offset);
 }
 
 void vmm_map(address_space_t address_space, vaddr_t virtual_addr, paddr_t physical_addr, uint8_t flags)
@@ -169,12 +181,7 @@ void vmm_switch(address_space_t address_space)
 {
     vmm_page_entry *pml4 = (vmm_page_entry *)address_space;
     uint64_t physical_addr = (uint64_t)pml4 - vmm_hhdm_offset;
-    asm volatile(
-        "mov %0, %%cr3"      // %0 = first input, %% escapes to literal % for registers
-        :                    // output operands (none)
-        : "r"(physical_addr) // input: "r" = put in any general purpose register, (phys) = the value
-        : "memory"           // clobber: tell compiler memory may have changed
-    );
+    crx_write_cr3(physical_addr);
 }
 
 void vmm_unmap(address_space_t address_space, vaddr_t virtual_addr)
@@ -203,7 +210,8 @@ void vmm_unmap(address_space_t address_space, vaddr_t virtual_addr)
     vmm_page_entry pt_entry = pt[pt_idx];
 
     pt[pt_idx] = 0;
-    asm volatile("invlpg (%0)" ::"r"(virtual_addr) : "memory");
+    vmm_aux_invlpg(virtual_addr);
+    // asm volatile("invlpg (%0)" ::"r"(virtual_addr) : "memory");
     return;
 }
 
@@ -240,3 +248,12 @@ void vmm_destroy(address_space_t address_space)
     }
     pmm_free((paddr_t)((uint64_t)address_space - vmm_hhdm_offset));
 }
+
+#ifndef UNIT_TEST
+void vmm_aux_invlpg(vaddr_t virtual_addr)
+{
+    asm volatile("invlpg (%0)" ::"r"(virtual_addr) : "memory");
+}
+#else
+void vmm_aux_invlpg(vaddr_t virtual_addr) {}
+#endif

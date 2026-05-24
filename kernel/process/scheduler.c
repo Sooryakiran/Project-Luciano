@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "kmalloc.h"
 #include "arch/x86_64/tss.h"
+#include "software_interrupts.h"
 
 task_t *queue[MAX_PROCESSES];
 task_t *sentinal_task;
@@ -140,7 +141,7 @@ task_t *scheduler_get_current()
 void scheduler_yield()
 {
     k_log("[SCH] Gonna yeild using software interrupt.");
-    asm volatile("int $0x30");
+    software_interrupt_raise(0x30);
 }
 
 void scheduler_remove(task_t *task)

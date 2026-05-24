@@ -269,7 +269,7 @@ static fb_font_t fb_font8x16 = {
     .height = FB_FONT_8_16_HEIGHT,
     .width = FB_FONT_8_16_WIDTH,
     .h_space = 2,
-    .num_chars = 256,
+    .num_chars = (uint8_t)256,
     .v_space = 4,
 };
 

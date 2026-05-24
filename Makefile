@@ -147,17 +147,38 @@ emulate_x86:
 	-display cocoa,zoom-to-fit=on \
     -m 256M 
 
-X86_TEST_SRCS = $(wildcard $(X86_TEST_DIR)/*.c)
+X86_TEST_SRCS = $(wildcard $(X86_TEST_DIR)/test_*.c)
 X86_TEST_BINS = $(patsubst $(X86_TEST_DIR)/%.c, $(X86_TEST_BUILD_DIR)/%, $(X86_TEST_SRCS))
 
-X86_ARCH_SRCS = $(wildcard $(KERNEL_DIR)/arch/x86_64/*.c)
-X86_TEST_KERN_OBJS = $(patsubst $(KERNEL_DIR)/arch/x86_64/%.c, $(X86_TEST_BUILD_DIR)/%.o, $(X86_ARCH_SRCS))
+X86_ARCH_SRCS = $(wildcard $(KERNEL_DIR)/arch/x86_64/*.c) \
+	$(wildcard $(KERNEL_DIR)/arch/x86_64/boot/*.c) \
+	$(wildcard $(KERNEL_DIR)/*.c) \
+	$(wildcard $(KERNEL_DIR)/libc/*.c) \
+	$(wildcard $(KERNEL_DIR)/memory_manager/*.c) \
+	$(wildcard $(KERNEL_DIR)/process/*.c) \
+	$(wildcard $(KERNEL_DIR)/drivers/*.c) \
+	$(wildcard $(KERNEL_DIR)/drivers/framebuffer/*.c)
+
+# X86_TEST_KERN_OBJS = $(patsubst $(KERNEL_DIR)/arch/x86_64/%.c, $(X86_TEST_BUILD_DIR)/%.o, $(X86_ARCH_SRCS))
+X86_TEST_KERN_OBJS = $(patsubst $(KERNEL_DIR)/%.c, $(X86_TEST_BUILD_DIR)/%.o, $(X86_ARCH_SRCS))
 
 test_x86_setup: setup
 	mkdir -p $(X86_TEST_BUILD_DIR)
+	mkdir -p $(X86_TEST_BUILD_DIR)/arch/x86_64/boot
+	mkdir -p $(X86_TEST_BUILD_DIR)/libc
+	mkdir -p $(X86_TEST_BUILD_DIR)/memory_manager
+	mkdir -p $(X86_TEST_BUILD_DIR)/process
+	mkdir -p $(X86_TEST_BUILD_DIR)/drivers/framebuffer
 
-$(X86_TEST_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.c test_x86_setup
-	clang -DUNIT_TEST -I./$(KERNEL_DIR)/include -I./$(KERNEL_DIR)/arch/x86_64 -c $< -o $@
+
+X86_TEST_CLANG = clang -DUNIT_TEST -I./$(KERNEL_DIR)/include -I./$(KERNEL_DIR)/arch/x86_64 -c $< -o $@
+
+$(X86_TEST_BUILD_DIR)/arch/x86_64/%.o: $(KERNEL_DIR)/arch/x86_64/%.c test_x86_setup
+	$(X86_TEST_CLANG)
+
+$(X86_TEST_BUILD_DIR)/%.o: $(KERNEL_DIR)/%.c test_x86_setup
+	$(X86_TEST_CLANG)
+
 
 $(X86_TEST_BUILD_DIR)/%: $(X86_TEST_DIR)/%.c $(X86_TEST_KERN_OBJS)
 	echo "kernel objs: $(X86_TEST_KERN_OBJS)"
@@ -166,7 +187,11 @@ $(X86_TEST_BUILD_DIR)/%: $(X86_TEST_DIR)/%.c $(X86_TEST_KERN_OBJS)
 
 test_x86: $(X86_TEST_BINS)
 	echo "test suite completed"
-	
+
+# test_x86:
+# 	echo $(X86_TEST_SRCS)
+# 	echo $(X86_TEST_BINS)
+
 clean:
 	rm -rf $(BUILD_DIR)/*
 	rm -rf $(ISO_DIR)/*

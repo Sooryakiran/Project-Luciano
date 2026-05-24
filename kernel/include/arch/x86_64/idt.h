@@ -21,3 +21,4 @@ typedef struct
 
 void idt_init();
 void sti();
+void lidt(idtr *);
