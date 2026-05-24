@@ -136,7 +136,10 @@ process_t *load_user_loop(boot_info *info)
         size_t copy_size = (offset + PMM_FRAME_SIZE > size) ? (size - offset) : PMM_FRAME_SIZE;
         memcpy((void *)(phys + info->hhdm_offset), user_loop_start + offset, copy_size);
     }
-    return create_process(user_code_va, space, PRIVILEGE_USER);
+    process_t *proc = create_process(user_code_va, space, PRIVILEGE_USER);
+    task_t *task_2 = task_create(proc, user_code_va);
+    process_add_task(proc, task_2);
+    return proc;
 }
 
 void kmain(void)
@@ -175,6 +178,8 @@ void kmain(void)
     scheduler_add(proc_e->tasks[0]);
     
     scheduler_add(user_proc_a->tasks[0]);
+    scheduler_add(user_proc_a->tasks[1]);
+
 
     // process_switch(proc_a, proc_b);
 

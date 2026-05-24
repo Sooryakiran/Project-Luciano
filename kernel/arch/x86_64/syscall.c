@@ -11,14 +11,16 @@
 #define LSTAR 0xC0000082
 #define SFMASK 0xC0000084
 
-
 #define SYS_YIELD 24
+#define SYS_EXIT 60
 
 uint64_t user_rsp_scratch = 0;
 
 extern void syscall_handler();
 
 void sys_yield();
+void sys_exit();
+void sys_exit_group();
 
 void syscall_init()
 {
@@ -45,17 +47,41 @@ void syscall_dispatch(
     case SYS_YIELD:
         sys_yield();
         break;
-    
+    case SYS_EXIT:
+        sys_exit();
+        break;
     default:
         break;
     }
 }
 
-void sys_yield() {
-
+void sys_yield()
+{
     task_t *current_task = scheduler_get_current();
     process_t *current_process = current_task->process;
     k_log("[SYSCALL] Yield called for pid: %d", current_process->pid);
     scheduler_yield();
+}
 
+void sys_exit()
+{
+    task_t *current_task = scheduler_get_current();
+    k_log("[SYSCALL] Exit called for pid: %d, tid: %d", current_task->process->pid, current_task->tid);
+
+    if (task_is_main(current_task))
+    {
+        k_log("[SYSCALL] Exit called on main task (%d, %d)", current_task->process->pid, current_task->tid);
+        // remove all related tasks from scheduler
+        // todo later
+        sys_exit_group();
+        return;
+    }
+
+    k_log("[SYS] Yeilding");
+    // scheduler_remove(current_task);
+    scheduler_yield();
+}
+
+void sys_exit_group()
+{
 }

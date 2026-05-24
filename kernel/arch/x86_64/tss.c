@@ -12,7 +12,7 @@ void tss_init() {
 }
 
 void tss_update(vaddr_t rsp0) {
-    k_log("[TSS] rsp0 = %x", rsp0);
+    // k_log("[TSS] rsp0 = %x", rsp0);
     tss.rsp0 = rsp0;
 }
 

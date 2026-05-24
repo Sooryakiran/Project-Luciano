@@ -47,7 +47,8 @@ void scheduler_add(task_t *task)
     k_log("[SCH] Current queue length is %d", queue_length);
 }
 
-uint8_t scheduler_aux_check_validate_state() {
+uint8_t scheduler_aux_check_validate_state()
+{
     // k_log("[SCH] tick: queue length is %d", queue_length);
     if (queue_length == 0)
     {
@@ -57,25 +58,38 @@ uint8_t scheduler_aux_check_validate_state() {
     return 1;
 }
 
-task_t *scheduler_aux_get_current_or_sential() {
-    return scheduler_running? queue[current_idx] : sentinal_task;
+task_t *scheduler_aux_get_current_or_sential()
+{
+    return scheduler_running ? queue[current_idx] : sentinal_task;
 }
 
-task_t *scheduler_aux_get_next() {
-    current_idx = (current_idx + 1) % queue_length;
-    return queue[current_idx];
+task_t *scheduler_get_next()
+{
+    uint64_t next_idx = (current_idx + 1) % queue_length;
+    uint64_t checked = 0;
+    while (queue[next_idx] == NULL   || queue[next_idx]->state == TASK_DEAD)
+    {
+        next_idx = (next_idx + 1) % queue_length;
+        if (++checked == queue_length)
+            return NULL; // all dead
+    }
+    current_idx = next_idx;
+    return queue[next_idx];
 }
 
-void scheduler_aux_start() {
+void scheduler_aux_start()
+{
     scheduler_running = 1;
 }
 
-uint8_t scheduler_aux_validate_switch(task_t *current, task_t *next) {
+uint8_t scheduler_aux_validate_switch(task_t *current, task_t *next)
+{
     // todo add more validations
     return current != next;
 }
 
-void scheduler_aux_update_state(task_t *current, task_t *next) {
+void scheduler_aux_update_state(task_t *current, task_t *next)
+{
     current->state = TASK_READY;
     next->state = TASK_RUNNING;
     k_log("[SCH] Scheduler going to switch from (pid, tid) (%d, %d) to (%d, %d)", current->process->pid, current->tid, next->process->pid, next->tid);
@@ -83,13 +97,15 @@ void scheduler_aux_update_state(task_t *current, task_t *next) {
 
 uint8_t scheduler_tick(task_t **current_out, task_t **next_out)
 {
-    if (!scheduler_aux_check_validate_state()) return 0;
+    if (!scheduler_aux_check_validate_state())
+        return 0;
 
     task_t *current = scheduler_aux_get_current_or_sential();
     scheduler_aux_start();
-    task_t *next = scheduler_aux_get_next();
+    task_t *next = scheduler_get_next();
 
-    if (!scheduler_aux_validate_switch(current, next)) return 0;
+    if (!scheduler_aux_validate_switch(current, next))
+        return 0;
     scheduler_aux_update_state(current, next);
     *current_out = current;
     *next_out = next;
@@ -105,4 +121,19 @@ void scheduler_yield()
 {
     k_log("[SCH] Gonna yeild using software interrupt.");
     asm volatile("int $0x30");
+}
+
+void scheduler_remove(task_t *task)
+{
+    // O(n), i will use a more complicated scheduler later
+    // i will implement all interfaces and make sure the system is working
+
+    for (uint64_t i = 0; i < queue_length; i++)
+    {
+        if (queue[i] == task)
+        {
+            queue[i]->state = TASK_DEAD;
+            return;
+        }
+    }
 }

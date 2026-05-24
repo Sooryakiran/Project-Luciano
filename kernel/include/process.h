@@ -27,4 +27,5 @@ static process_t *process_table[MAX_PROCESSES];
 process_t *create_process(vaddr_t, address_space_t, privilege_t);
 void process_add_task(process_t *, struct task*);
 void process_destroy(process_t *);
+struct task * process_get_main_task(process_t *);
 

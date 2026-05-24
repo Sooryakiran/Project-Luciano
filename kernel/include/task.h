@@ -25,3 +25,4 @@ typedef struct task
 
 task_t *task_create(struct process *process, vaddr_t entry_point);
 void task_destroy(task_t *task);
+uint8_t task_is_main(task_t *task);

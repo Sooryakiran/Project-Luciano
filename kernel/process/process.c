@@ -21,3 +21,10 @@ void process_add_task(process_t *process, task_t *task) {
     }
     process->tasks[process->task_count++] = task;
 }
+
+task_t *process_get_main_task(process_t *process) {
+    if (process->task_count <= 0) {
+        k_panic("[PROCESS] No tasks in this process");
+    }
+    return process->tasks[0];
+}

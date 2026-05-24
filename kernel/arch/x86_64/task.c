@@ -11,9 +11,11 @@
 
 uint64_t next_tid = 1;
 
-void map_user_stack(address_space_t addr_space, uint8_t tid) {
+void map_user_stack(address_space_t addr_space, uint8_t tid)
+{
     size_t num_frames = (USER_STACK_SIZE + PMM_FRAME_SIZE - 1) / PMM_FRAME_SIZE;
-    for (size_t i = 0; i < num_frames; i++) {
+    for (size_t i = 0; i < num_frames; i++)
+    {
         paddr_t physical_addr = pmm_alloc();
         vaddr_t virtual_addr = USER_STACK_BASE(tid) + i * PMM_FRAME_SIZE;
         vmm_map(addr_space, virtual_addr, physical_addr, USER_ACCESSIBLE_FLAG);
@@ -36,7 +38,9 @@ task_t *task_create(process_t *process, vaddr_t entry_point)
         map_user_stack(process->address_space, task->tid);
         task->user_stack_base = USER_STACK_BASE(task->tid);
         task->user_stack_top = USER_STACK_TOP(task->tid);
-    } else {
+    }
+    else
+    {
         task->user_stack_base = 0;
         task->user_stack_top = 0;
     }
@@ -67,4 +71,9 @@ void task_destroy(task_t *task)
     k_log("[TASK] I am death, destroyer or tasks");
     kfree((void *)task->kernel_stack_base);
     kfree((void *)task);
+}
+
+uint8_t task_is_main(task_t *task)
+{
+    return process_get_main_task(task->process) == task;
 }
