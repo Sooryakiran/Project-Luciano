@@ -9,3 +9,5 @@ task_t *scheduler_get_current();
 task_t *scheduler_get_next();
 void scheduler_yield();
 void scheduler_remove(task_t *task);
+void scheduler_task_cleanupd();
+void scheduler_enable();

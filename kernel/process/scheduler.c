@@ -13,8 +13,10 @@ process_t *sentinal_process;
 uint64_t queue_length = 0;
 uint64_t current_idx = 0;
 uint8_t scheduler_running = 0;
+uint8_t scheduler_enabled = 0;
 
 int scheduler_switch_task(task_t *current, task_t *next);
+void scheduler_aux_spawn_daemon();
 
 void scheduler_init_sentinals()
 {
@@ -29,6 +31,16 @@ void scheduler_init_sentinals()
     sentinal_task->stack_pointer = 0;
     sentinal_task->kernel_stack_base = 0;
     sentinal_task->kernel_stack_top = 0;
+
+    
+}
+
+void scheduler_aux_spawn_daemon() {
+    address_space_t curr_space = vmm_get_current_space();
+    process_t* sch_proc_d = create_process((vaddr_t)&scheduler_task_cleanupd, curr_space, PRIVILEGE_KERNEL);
+    for (uint8_t i = 0; i < sch_proc_d->task_count; i++){
+        scheduler_add(sch_proc_d->tasks[i]);
+    }
 }
 
 void scheduler_init()
@@ -36,7 +48,9 @@ void scheduler_init()
     k_log("[SCH] Initializing scheduler");
     queue_length = 0;
     current_idx = 0;
+    scheduler_enabled = 0;
     scheduler_init_sentinals();
+    scheduler_aux_spawn_daemon();
     k_log("[SCG] Done!");
 }
 
@@ -49,6 +63,7 @@ void scheduler_add(task_t *task)
 
 uint8_t scheduler_aux_check_validate_state()
 {
+    if (!scheduler_enabled) return 0;
     // k_log("[SCH] tick: queue length is %d", queue_length);
     if (queue_length == 0)
     {
@@ -74,7 +89,7 @@ task_t *scheduler_get_next()
             return NULL; // all dead
     }
     current_idx = next_idx;
-    k_log("[SCH] Next process found with (%d, %d) and state %d", queue[next_idx]->process->pid, queue[next_idx]->tid, queue[next_idx]->state);
+    // k_log("[SCH] Next process found with (%d, %d) and state %d", queue[next_idx]->process->pid, queue[next_idx]->tid, queue[next_idx]->state);
     return queue[next_idx];
 }
 
@@ -93,9 +108,8 @@ void scheduler_aux_update_state(task_t *current, task_t *next)
 {
     if(current->state == TASK_RUNNING)
         current->state = TASK_READY;
+    // k_log("[SCH] Switching from (%d, %d) to (%d, %d)", current->process->pid, current->tid, next->process->pid, next->tid);
     next->state = TASK_RUNNING;
-    if (next->process->pid == 5)
-    k_log("[SCH] Scheduler going to switch from (pid, tid) (%d, %d) to (%d, %d)", current->process->pid, current->tid, next->process->pid, next->tid);
 }
 
 uint8_t scheduler_tick(task_t **current_out, task_t **next_out)
@@ -103,12 +117,15 @@ uint8_t scheduler_tick(task_t **current_out, task_t **next_out)
     if (!scheduler_aux_check_validate_state())
         return 0;
 
+
     task_t *current = scheduler_aux_get_current_or_sential();
     scheduler_aux_start();
     task_t *next = scheduler_get_next();
+    // k_log("[SCH] Scheduler BADVALUD");
 
     if (!scheduler_aux_validate_switch(current, next))
         return 0;
+    
     scheduler_aux_update_state(current, next);
     *current_out = current;
     *next_out = next;
@@ -139,6 +156,24 @@ void scheduler_remove(task_t *task)
             queue[i]->state = TASK_DEAD;
             k_log("[SCH] Task (%d, %d) has state %d", queue[i]->process->pid, queue[i]->tid, queue[i]->state);
             return;
+        }
+    }
+}
+
+void scheduler_enable() {
+    k_log("[SCH] Scheduler taking over");
+    scheduler_enabled = 1;
+}
+
+void scheduler_task_cleanupd() {
+    k_log("[SCH] Staring daemon task cleanup");
+    while(1) {
+        for (uint64_t i = 0; i < queue_length; i++) {
+            if (queue[i] != NULL && queue[i]->state == TASK_DEAD) {
+                k_log("[SCHD] found dead task at (%d, %d)", queue[i]->process->pid, queue[i]->tid);
+                task_destroy(queue[i]);
+                queue[i] = NULL;
+            }
         }
     }
 }

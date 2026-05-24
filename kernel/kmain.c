@@ -189,7 +189,7 @@ void kmain(void)
 
 
     // process_switch(proc_a, proc_b);
-
+    scheduler_enable();
     for (;;)
     {
     }

@@ -68,7 +68,7 @@ task_t *task_create(process_t *process, vaddr_t entry_point)
 
 void task_destroy(task_t *task)
 {
-    k_log("[TASK] I am death, destroyer or tasks");
+    k_log("[TASK] I am death, destroyer of tasks");
     kfree((void *)task->kernel_stack_base);
     kfree((void *)task);
 }
