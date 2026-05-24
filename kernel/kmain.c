@@ -169,6 +169,8 @@ void kmain(void)
     process_t *proc_e = create_process((vaddr_t)&process_e, curr_space, PRIVILEGE_KERNEL);
 
     process_t *user_proc_a = load_user_loop(&info);
+    process_t *user_proc_b = load_user_loop(&info);
+
 
     scheduler_add(proc_a->tasks[0]);
     scheduler_add(proc_a->tasks[1]);
@@ -179,6 +181,11 @@ void kmain(void)
     
     scheduler_add(user_proc_a->tasks[0]);
     scheduler_add(user_proc_a->tasks[1]);
+
+    // scheduler_add(user_proc_b->tasks[0]);
+    // scheduler_add(user_proc_b->tasks[1]);
+
+    // scheduler_add(user_proc_a->tasks[1]);
 
 
     // process_switch(proc_a, proc_b);

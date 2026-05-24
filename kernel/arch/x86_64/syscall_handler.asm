@@ -12,9 +12,9 @@ extern k_log_hex
 
 
 syscall_handler:
-    swapgs
-    mov [gs:0], rsp 
-    ; mov [user_rsp_scratch], rsp
+    ; swapgs
+    ; mov [gs:0], rsp 
+    mov [user_rsp_scratch], rsp
     mov rsp, [tss + 4] ; tss->rsp0
 
     ; push caller saved regs
@@ -49,8 +49,8 @@ syscall_handler:
     pop rdi
     pop rax
     
-    ; mov rsp, [user_rsp_scratch] ; restore
-    mov rsp, [gs:0] 
-    swapgs
+    mov rsp, [user_rsp_scratch] ; restore
+    ; mov rsp, [gs:0] 
+    ; swapgs
     o64 sysret    
 

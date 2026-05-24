@@ -9,6 +9,7 @@ extern pic_eoi
 extern vmm_switch
 extern process_switch
 extern tss_update
+extern k_log_hex
 
 
 isr_stub_48:
@@ -26,7 +27,7 @@ isr_stub_48:
     sub rsp, 16
     lea rdi, [rsp]
     lea rsi, [rsp + 8]
-    
+
     call scheduler_tick
 
     test al, al

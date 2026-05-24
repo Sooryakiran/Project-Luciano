@@ -1,5 +1,7 @@
 BITS 64
 _start:
-    mov rax, 24
+    mov rbx, 1
+    add rbx, rbx
+    mov rax, 60
     syscall
     jmp _start

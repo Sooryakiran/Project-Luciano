@@ -67,13 +67,14 @@ task_t *scheduler_get_next()
 {
     uint64_t next_idx = (current_idx + 1) % queue_length;
     uint64_t checked = 0;
-    while (queue[next_idx] == NULL   || queue[next_idx]->state == TASK_DEAD)
+    while (queue[next_idx] == NULL || queue[next_idx]->state == TASK_DEAD)
     {
         next_idx = (next_idx + 1) % queue_length;
         if (++checked == queue_length)
             return NULL; // all dead
     }
     current_idx = next_idx;
+    k_log("[SCH] Next process found with (%d, %d) and state %d", queue[next_idx]->process->pid, queue[next_idx]->tid, queue[next_idx]->state);
     return queue[next_idx];
 }
 
@@ -90,8 +91,10 @@ uint8_t scheduler_aux_validate_switch(task_t *current, task_t *next)
 
 void scheduler_aux_update_state(task_t *current, task_t *next)
 {
-    current->state = TASK_READY;
+    if(current->state == TASK_RUNNING)
+        current->state = TASK_READY;
     next->state = TASK_RUNNING;
+    if (next->process->pid == 5)
     k_log("[SCH] Scheduler going to switch from (pid, tid) (%d, %d) to (%d, %d)", current->process->pid, current->tid, next->process->pid, next->tid);
 }
 
@@ -127,12 +130,14 @@ void scheduler_remove(task_t *task)
 {
     // O(n), i will use a more complicated scheduler later
     // i will implement all interfaces and make sure the system is working
-
+    k_log("[SCH] Removing task with pid %d, tid %d", task->process->pid, task->tid);
     for (uint64_t i = 0; i < queue_length; i++)
     {
         if (queue[i] == task)
         {
+            k_log("[SCH] Found task at index %d, marking as dead", i);
             queue[i]->state = TASK_DEAD;
+            k_log("[SCH] Task (%d, %d) has state %d", queue[i]->process->pid, queue[i]->tid, queue[i]->state);
             return;
         }
     }
