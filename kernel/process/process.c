@@ -8,9 +8,6 @@ void process_destroy(process_t *process)
 {
     k_log("[PROCESS] Destroying process with pid %d", process->pid);
     vmm_destroy(process->address_space);
-    // for(uint8_t i = 0; i < process->task_count; i++) {
-    //     task_destroy(process->tasks[i]);
-    // }
     process_table[process->pid] = NULL;
     kfree((void *)process);
 }

@@ -1,7 +1,7 @@
 #include "arch/x86_64/idt.h"
 #include "debug.h"
 
-uint16_t IDT_MAX_DESCRIPTORS = 256;
+#define IDT_MAX_DESCRIPTORS 256
 
 uint16_t GDT_OFFSET_KERNEL_CODE = 0x08;
 
@@ -27,7 +27,7 @@ void idt_init() {
     k_log("[IDT] Initializing IDT");
 
     __attribute__((aligned(0x10))) 
-    static idt_entry idt[256];
+    static idt_entry idt[IDT_MAX_DESCRIPTORS];
 
     for(uint16_t i = 0; i < IDT_MAX_DESCRIPTORS; i++) {
         idt[i] = create_idt_entry(isr_stub_table[i], 0x8E);
@@ -35,7 +35,7 @@ void idt_init() {
 
     static idtr registry;
     registry.offset = (uint64_t)idt;
-    registry.size = (uint16_t)(sizeof(idt_entry) * 256) - 1;
+    registry.size = (uint16_t)(sizeof(idt_entry) * IDT_MAX_DESCRIPTORS) - 1;
 
     lidt(&registry);
 

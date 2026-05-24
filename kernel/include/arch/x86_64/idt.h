@@ -18,7 +18,7 @@ typedef struct
     uint64_t offset;
 } __attribute__((packed)) idtr;
 
-
+idt_entry create_idt_entry(void *, uint8_t);
 void idt_init();
 void sti();
 void lidt(idtr *);

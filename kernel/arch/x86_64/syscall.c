@@ -67,7 +67,7 @@ uint64_t syscall_dispatch(
     case SYS_GETTID:
         return sys_gettid();
     default:
-        break;
+        return 0;
     }
 }
 

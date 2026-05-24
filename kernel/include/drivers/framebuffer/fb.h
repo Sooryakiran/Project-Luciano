@@ -10,7 +10,7 @@ typedef struct fb_font
     uint8_t h_space;
     uint8_t v_space;
     uint8_t num_chars;
-    uint8_t* data;
+    const uint8_t* data;
 } fb_font_t;
 
 
