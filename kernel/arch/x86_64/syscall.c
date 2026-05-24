@@ -13,6 +13,9 @@
 
 #define SYS_YIELD 24
 #define SYS_EXIT 60
+#define SYS_EXIT_GROUP 231
+#define SYS_GETPID 39
+#define SYS_GETTID 186
 
 uint64_t user_rsp_scratch = 0;
 
@@ -21,6 +24,8 @@ extern void syscall_handler();
 void sys_yield();
 void sys_exit();
 void sys_exit_group();
+uint64_t sys_getpid();
+uint64_t sys_gettid();
 
 void syscall_init()
 {
@@ -33,7 +38,7 @@ void syscall_init()
     wrmsr(SFMASK, 0x202);
 }
 
-void syscall_dispatch(
+uint64_t syscall_dispatch(
     uint64_t syscall_number,
     uint64_t arg1,
     uint64_t arg2,
@@ -41,15 +46,22 @@ void syscall_dispatch(
     uint64_t arg4,
     uint64_t arg5)
 {
-    k_log("[SYSCALL] Wow syscall %lu  and arf %lu", syscall_number, arg1);
+    k_log("[SYSCALL] Wow syscall %lu and arf %lu", syscall_number, arg1);
     switch (syscall_number)
     {
     case SYS_YIELD:
         sys_yield();
-        break;
+        return 0;
     case SYS_EXIT:
         sys_exit();
-        break;
+        return 0;
+    case SYS_EXIT_GROUP:
+        sys_exit_group();
+        return 0;
+    case SYS_GETPID:
+        return sys_getpid();
+    case SYS_GETTID:
+        return sys_gettid();
     default:
         break;
     }
@@ -89,4 +101,17 @@ void sys_exit_group()
         scheduler_remove(current_process->tasks[i]);
     } 
     scheduler_yield();
+}
+
+
+uint64_t sys_getpid() {
+    task_t *current_task = scheduler_get_current();
+    k_log("[SYSCALL] Get PID called");
+    return current_task->process->pid;
+}
+
+uint64_t sys_gettid() {
+    task_t *current_task = scheduler_get_current();
+    k_log("[SYSCALL] Get TID called %d", current_task->tid);
+    return current_task->tid;
 }

@@ -18,7 +18,6 @@ syscall_handler:
     mov rsp, [tss + 4] ; tss->rsp0
 
     ; push caller saved regs
-    push rax
     push rdi
     push rsi
     push rcx
@@ -47,7 +46,6 @@ syscall_handler:
     pop rcx
     pop rsi
     pop rdi
-    pop rax
     
     mov rsp, [user_rsp_scratch] ; restore
     ; mov rsp, [gs:0] 

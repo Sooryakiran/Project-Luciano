@@ -45,12 +45,12 @@ paddr_t pmm_alloc()
 }
 
 void pmm_free(paddr_t addr) {
-    k_log("[PMM] Freeing memory.");
+    // k_log("[PMM] Freeing memory.");
     uint64_t frame = addr / PMM_FRAME_SIZE;
     uint8_t j = frame % 8;
     uint64_t i = frame / 8;
     pmm_bitmap[i] &= ~(1 << j);
-    k_log("[PMM] Memory freed.");
+    // k_log("[PMM] Memory freed.");
 }
 
 void pmm_init(mem_region *regions, size_t count, uint64_t hhdm_offset)
