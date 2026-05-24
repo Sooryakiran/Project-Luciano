@@ -30,6 +30,11 @@ syscall_handler:
 
 
     ; call dispatcher
+    mov r8, r9
+    mov r9, r10
+    mov r10, rdx
+    mov rdx, rsi
+    mov rsi, rdi
     mov rdi, rax ; rax is supposed to have syscall number
     call syscall_dispatch
     ; do anything no problem

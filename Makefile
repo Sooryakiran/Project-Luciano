@@ -90,6 +90,7 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/idt.o \
 	$(X86_BUILD_DIR)/isr_table.o \
 	$(X86_BUILD_DIR)/isr_timer.o \
+	$(X86_BUILD_DIR)/isr_yield.o \
 	$(X86_BUILD_DIR)/isr.o \
 	$(X86_BUILD_DIR)/pic.o \
 	$(X86_BUILD_DIR)/boot/limine.o \

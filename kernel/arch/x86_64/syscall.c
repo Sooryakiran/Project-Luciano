@@ -2,6 +2,7 @@
 #include "arch/x86_64/msr.h"
 #include "debug.h"
 #include "types.h"
+#include "scheduler.h"
 
 #define KERNEL_GS_BASE 0xC0000102
 
@@ -10,9 +11,14 @@
 #define LSTAR 0xC0000082
 #define SFMASK 0xC0000084
 
+
+#define SYS_YIELD 24
+
 uint64_t user_rsp_scratch = 0;
 
 extern void syscall_handler();
+
+void sys_yield();
 
 void syscall_init()
 {
@@ -22,10 +28,34 @@ void syscall_init()
     wrmsr(EFER, rmsr(EFER) | 1);
     wrmsr(STAR, 0x0018000800000000); // kernel CS=0x08, user CS=0x18
     wrmsr(LSTAR, (uint64_t)&syscall_handler);
-    wrmsr(SFMASK, 0x202); 
+    wrmsr(SFMASK, 0x202);
 }
 
-void syscall_dispatch(uint64_t syscall_number)
+void syscall_dispatch(
+    uint64_t syscall_number,
+    uint64_t arg1,
+    uint64_t arg2,
+    uint64_t arg3,
+    uint64_t arg4,
+    uint64_t arg5)
 {
-    k_log("[SYSCALL] Wow syscall %lu", syscall_number);
+    k_log("[SYSCALL] Wow syscall %lu  and arf %lu", syscall_number, arg1);
+    switch (syscall_number)
+    {
+    case SYS_YIELD:
+        sys_yield();
+        break;
+    
+    default:
+        break;
+    }
+}
+
+void sys_yield() {
+
+    task_t *current_task = scheduler_get_current();
+    process_t *current_process = current_task->process;
+    k_log("[SYSCALL] Yield called for pid: %d", current_process->pid);
+    scheduler_yield();
+
 }

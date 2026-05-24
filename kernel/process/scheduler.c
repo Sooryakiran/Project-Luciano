@@ -4,6 +4,7 @@
 #include "task.h"
 #include "debug.h"
 #include "kmalloc.h"
+#include "arch/x86_64/tss.h"
 
 task_t *queue[MAX_PROCESSES];
 task_t *sentinal_task;
@@ -12,6 +13,8 @@ process_t *sentinal_process;
 uint64_t queue_length = 0;
 uint64_t current_idx = 0;
 uint8_t scheduler_running = 0;
+
+int scheduler_switch_task(task_t *current, task_t *next);
 
 void scheduler_init_sentinals()
 {
@@ -44,40 +47,62 @@ void scheduler_add(task_t *task)
     k_log("[SCH] Current queue length is %d", queue_length);
 }
 
-uint8_t scheduler_tick(task_t **current_out, task_t **next_out)
-{
+uint8_t scheduler_aux_check_validate_state() {
     // k_log("[SCH] tick: queue length is %d", queue_length);
     if (queue_length == 0)
     {
         // k_log("[SCH] empty queue, skipping");
         return 0;
     }
+    return 1;
+}
 
-    task_t *current;
-    if (scheduler_running == 0)
-    {
-        current = sentinal_task;
-        scheduler_running = 1;
-    }
-    else
-    {
-        current = queue[current_idx];
-    }
+task_t *scheduler_aux_get_current_or_sential() {
+    return scheduler_running? queue[current_idx] : sentinal_task;
+}
 
-    // if (current->process->privilege == PRIVILEGE_USER)
-    // {
-    //     k_log("[SCH] running user task tid=%d", current->tid);
-    // }
-    
+task_t *scheduler_aux_get_next() {
     current_idx = (current_idx + 1) % queue_length;
-    task_t *next = queue[current_idx];
-    if (current == next)
-        return 0;
+    return queue[current_idx];
+}
+
+void scheduler_aux_start() {
+    scheduler_running = 1;
+}
+
+uint8_t scheduler_aux_validate_switch(task_t *current, task_t *next) {
+    // todo add more validations
+    return current != next;
+}
+
+void scheduler_aux_update_state(task_t *current, task_t *next) {
     current->state = TASK_READY;
     next->state = TASK_RUNNING;
     k_log("[SCH] Scheduler going to switch from (pid, tid) (%d, %d) to (%d, %d)", current->process->pid, current->tid, next->process->pid, next->tid);
-    // process_switch(current, next);
+}
+
+uint8_t scheduler_tick(task_t **current_out, task_t **next_out)
+{
+    if (!scheduler_aux_check_validate_state()) return 0;
+
+    task_t *current = scheduler_aux_get_current_or_sential();
+    scheduler_aux_start();
+    task_t *next = scheduler_aux_get_next();
+
+    if (!scheduler_aux_validate_switch(current, next)) return 0;
+    scheduler_aux_update_state(current, next);
     *current_out = current;
     *next_out = next;
     return 1;
+}
+
+task_t *scheduler_get_current()
+{
+    return queue[current_idx];
+}
+
+void scheduler_yield()
+{
+    k_log("[SCH] Gonna yeild using software interrupt.");
+    asm volatile("int $0x30");
 }

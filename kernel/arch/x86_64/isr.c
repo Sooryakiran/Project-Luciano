@@ -6,6 +6,7 @@
 
 void exception_handler(uint64_t, uint64_t, uint64_t);
 void irq_handler(uint64_t);
+void software_interrupt_handler(uint64_t);
 void timer_handler();
 void keyboard_handler();
 
@@ -14,6 +15,11 @@ void exception_handler(uint64_t vector, uint64_t error_code, uint64_t rip) {
         irq_handler(vector);
         return;
     }
+    if (vector >= 0x30) {
+        software_interrupt_handler(vector);
+        return;
+    }
+    
     uint64_t cr2;
     asm volatile("mov %%cr2, %0" : "=r"(cr2));
     
@@ -40,6 +46,10 @@ void irq_handler(uint64_t vector) {
         break;
     }
 
+}
+
+void software_interrupt_handler(uint64_t vector) {
+    k_log("[ISR] Software interrupt recieved %x", vector);
 }
 
 void timer_handler() {
