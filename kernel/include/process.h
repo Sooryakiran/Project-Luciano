@@ -2,14 +2,16 @@
 #include "types.h"
 #include "vmm.h"
 #include "task.h"
+#include "vfs.h"
 
 #define MAX_TASKS_PER_PROCESS 256
 #define KERNEL_STACK_SIZE 0x20000   // 64KB
 #define USER_STACK_SIZE 0x100000  // 1MB
 #define MAX_PROCESSES 1024
+#define MAX_FILE_DESCRIPTORS 1024
 
 struct task;
-
+struct file_descriptor;
 typedef struct process
 {
     uint64_t pid;
@@ -17,6 +19,7 @@ typedef struct process
     struct task *tasks[MAX_TASKS_PER_PROCESS];
     uint8_t task_count;
     privilege_t privilege;
+    struct file_descriptor *fds[MAX_FILE_DESCRIPTORS];
 } process_t;
 
 

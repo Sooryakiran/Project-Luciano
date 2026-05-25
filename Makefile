@@ -12,6 +12,7 @@ LIMINE_BRANCH := v8.x-binary
 X86_BUILD_DIR := $(BUILD_DIR)/x86_64
 X86_TEST_BUILD_DIR := $(BUILD_DIR)/x86_64_test
 X86_TEST_DIR := tests/kernel/arch/x86_64
+KERN_TEST_DIR := tests/kernel
 X86_ISO_DIR := $(ISO_DIR)/x86_64
 ISO_NAME = waltos.iso
 
@@ -41,6 +42,7 @@ x_86_setup: setup
 	mkdir -p $(X86_BUILD_DIR)/libc
 	mkdir -p $(X86_BUILD_DIR)/process
 	mkdir -p $(X86_BUILD_DIR)/drivers
+	mkdir -p $(X86_BUILD_DIR)/vfs
 
 X86_CLANG = clang --target=x86_64-elf $(X86_CFLAGS) -c $< -o $@
 
@@ -68,7 +70,14 @@ $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.c
 $(X86_BUILD_DIR)/boot/%.o: $(KERNEL_DIR)/arch/x86_64/boot/%.c
 	$(X86_CLANG)
 
+$(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/syscalls/%.c
+	$(X86_CLANG)
+
+
 $(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/framebuffer/%.c
+	$(X86_CLANG)
+
+$(X86_BUILD_DIR)/vfs/%.o: $(KERNEL_DIR)/vfs/%.c
 	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/user/bin/%.bin:
@@ -107,7 +116,10 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/process/scheduler.o \
 	$(X86_BUILD_DIR)/tss.o \
 	$(X86_BUILD_DIR)/syscall.o \
+	$(X86_BUILD_DIR)/syscall_proc.o \
+	$(X86_BUILD_DIR)/syscall_vfs.o \
 	$(X86_BUILD_DIR)/syscall_handler.o \
+	$(X86_BUILD_DIR)/vfs/vfs.o \
 	$(X86_BUILD_DIR)/user/bin/loop.o 
 
 
@@ -149,9 +161,12 @@ emulate_x86:
 
 X86_TEST_SRCS = $(wildcard $(X86_TEST_DIR)/test_*.c)
 X86_TEST_BINS = $(patsubst $(X86_TEST_DIR)/%.c, $(X86_TEST_BUILD_DIR)/%, $(X86_TEST_SRCS))
+KERN_TEST_SRCS = $(wildcard $(KERN_TEST_DIR)/test_*.c)
+KERN_TEST_BINS = $(patsubst $(KERN_TEST_DIR)/%.c, $(KERN_TEST_DIR)/%, $(KERN_TEST_SRCS))
 
 X86_ARCH_SRCS = $(wildcard $(KERNEL_DIR)/arch/x86_64/*.c) \
 	$(wildcard $(KERNEL_DIR)/arch/x86_64/boot/*.c) \
+	$(wildcard $(KERNEL_DIR)/arch/x86_64/syscalls/*.c) \
 	$(wildcard $(KERNEL_DIR)/*.c) \
 	$(wildcard $(KERNEL_DIR)/libc/*.c) \
 	$(wildcard $(KERNEL_DIR)/memory_manager/*.c) \
@@ -165,11 +180,14 @@ X86_TEST_KERN_OBJS = $(patsubst $(KERNEL_DIR)/%.c, $(X86_TEST_BUILD_DIR)/%.o, $(
 test_x86_setup: setup
 	mkdir -p $(X86_TEST_BUILD_DIR)
 	mkdir -p $(X86_TEST_BUILD_DIR)/arch/x86_64/boot
+	mkdir -p $(X86_TEST_BUILD_DIR)/arch/x86_64/syscalls
 	mkdir -p $(X86_TEST_BUILD_DIR)/libc
 	mkdir -p $(X86_TEST_BUILD_DIR)/memory_manager
 	mkdir -p $(X86_TEST_BUILD_DIR)/process
 	mkdir -p $(X86_TEST_BUILD_DIR)/drivers/framebuffer
 
+test_kern_setup: setup
+	mkdir -p $(KERN_TEST_DIR)
 
 X86_TEST_CLANG = clang -DUNIT_TEST -I./$(KERNEL_DIR)/include -I./$(KERNEL_DIR)/arch/x86_64 -c $< -o $@
 
@@ -179,15 +197,22 @@ $(X86_TEST_BUILD_DIR)/arch/x86_64/%.o: $(KERNEL_DIR)/arch/x86_64/%.c test_x86_se
 $(X86_TEST_BUILD_DIR)/%.o: $(KERNEL_DIR)/%.c test_x86_setup
 	$(X86_TEST_CLANG)
 
+$(KERN_TEST_DIR)/%: $(KERN_TEST_DIR)/%.c $(X86_TEST_KERN_OBJS)
+	clang -DUNIT_TEST -I./$(KERNEL_DIR)/include $< $(X86_TEST_KERN_OBJS) -o $@
+	./$@
 
 $(X86_TEST_BUILD_DIR)/%: $(X86_TEST_DIR)/%.c $(X86_TEST_KERN_OBJS)
-	echo "kernel objs: $(X86_TEST_KERN_OBJS)"
 	clang -DUNIT_TEST -I./$(KERNEL_DIR)/include $< $(X86_TEST_KERN_OBJS) -o $@
 	./$@
 
 test_x86: $(X86_TEST_BINS)
 	echo "test suite completed"
 
+test_kern: $(KERN_TEST_BINS)
+	echo "test suite completed"
+
+# test_kern: 
+# 	echo $(X86_ARCH_SRCS)
 # test_x86:
 # 	echo $(X86_TEST_SRCS)
 # 	echo $(X86_TEST_BINS)
