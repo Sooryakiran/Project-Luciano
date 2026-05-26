@@ -65,29 +65,35 @@ void k_printf_d(int n)
     }
 }
 
-void k_printf_b(uint64_t n) {
+void k_printf_b(uint64_t n)
+{
     char buf[64];
-    if (n == 0) {
+    if (n == 0)
+    {
         k_putc('0');
         return;
     }
     int i = 0;
-    while (n > 0) {
-        buf[i++] = ((n & 0x1) == 1)? '1' : '0';
+    while (n > 0)
+    {
+        buf[i++] = ((n & 0x1) == 1) ? '1' : '0';
         n >>= 1;
     }
-    while (i--) {
+    while (i--)
+    {
         k_putc(buf[i]);
     }
 }
 
-void k_printf_x(uint64_t n) {
+void k_printf_x(uint64_t n)
+{
 
     char buf[64];
     const char *char_map = "0123456789abcdef";
     // char char_map[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-    
-    if (n == 0) {
+
+    if (n == 0)
+    {
         k_putc('0');
         return;
     }
@@ -97,11 +103,11 @@ void k_printf_x(uint64_t n) {
         buf[i++] = char_map[(n % 16)];
         n >>= 4;
     }
-    while(i--) {
+    while (i--)
+    {
         k_putc(buf[i]);
     }
 }
-
 
 void k_printf(const char *s, va_list args)
 {
@@ -130,7 +136,7 @@ void k_printf(const char *s, va_list args)
                 s++;
                 break;
             }
-            
+
             case 'b':
             {
                 uint64_t n;
@@ -169,7 +175,7 @@ void k_print_format(const char *t, const char *s, va_list args)
     k_print("\n");
 }
 
-void k_log_hex(uint64_t value) 
+void k_log_hex(uint64_t value)
 {
     k_log("Value %x", value);
 }
@@ -211,6 +217,7 @@ void k_panic(const char *s, ...)
 
 #else
 
+#include <stdio.h>
 int k_debug_panic_called = 0;
 
 void k_debug_unit_test_reset()
@@ -227,7 +234,13 @@ void k_init(void) {}
 void k_putc(char c) {}
 void k_print(const char *s) {}
 void k_log_hex(uint64_t n) {}
-void k_log(const char *s, ...) {}
+void k_log(const char *s, ...)
+{
+    va_list args;
+    va_start(args, s);
+    vprintf(s, args);
+    va_end(args);
+}
 void k_warn(const char *s, ...) {}
 void k_error(const char *s, ...) {}
 void k_panic(const char *s, ...)

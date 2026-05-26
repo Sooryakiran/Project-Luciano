@@ -73,7 +73,6 @@ $(X86_BUILD_DIR)/boot/%.o: $(KERNEL_DIR)/arch/x86_64/boot/%.c
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/syscalls/%.c
 	$(X86_CLANG)
 
-
 $(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/framebuffer/%.c
 	$(X86_CLANG)
 
@@ -172,7 +171,11 @@ X86_ARCH_SRCS = $(wildcard $(KERNEL_DIR)/arch/x86_64/*.c) \
 	$(wildcard $(KERNEL_DIR)/memory_manager/*.c) \
 	$(wildcard $(KERNEL_DIR)/process/*.c) \
 	$(wildcard $(KERNEL_DIR)/drivers/*.c) \
-	$(wildcard $(KERNEL_DIR)/drivers/framebuffer/*.c)
+	$(wildcard $(KERNEL_DIR)/drivers/framebuffer/*.c) \
+	$(wildcard $(KERNEL_DIR)/drivers/ramfs/*.c) \
+	$(wildcard $(KERNEL_DIR)/vfs/*.c)
+
+
 
 # X86_TEST_KERN_OBJS = $(patsubst $(KERNEL_DIR)/arch/x86_64/%.c, $(X86_TEST_BUILD_DIR)/%.o, $(X86_ARCH_SRCS))
 X86_TEST_KERN_OBJS = $(patsubst $(KERNEL_DIR)/%.c, $(X86_TEST_BUILD_DIR)/%.o, $(X86_ARCH_SRCS))
@@ -183,8 +186,10 @@ test_x86_setup: setup
 	mkdir -p $(X86_TEST_BUILD_DIR)/arch/x86_64/syscalls
 	mkdir -p $(X86_TEST_BUILD_DIR)/libc
 	mkdir -p $(X86_TEST_BUILD_DIR)/memory_manager
+	mkdir -p $(X86_TEST_BUILD_DIR)/vfs
 	mkdir -p $(X86_TEST_BUILD_DIR)/process
 	mkdir -p $(X86_TEST_BUILD_DIR)/drivers/framebuffer
+	mkdir -p $(X86_TEST_BUILD_DIR)/drivers/ramfs
 
 test_kern_setup: setup
 	mkdir -p $(KERN_TEST_DIR)
@@ -213,6 +218,7 @@ test_kern: $(KERN_TEST_BINS)
 
 # test_kern: 
 # 	echo $(X86_ARCH_SRCS)
+
 # test_x86:
 # 	echo $(X86_TEST_SRCS)
 # 	echo $(X86_TEST_BINS)
