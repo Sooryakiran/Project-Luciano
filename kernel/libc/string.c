@@ -1,5 +1,6 @@
 #include "string.h"
 #include "types.h"
+#include "debug.h"
 
 void *memset(void *ptr, int value, size_t size)
 {
@@ -24,10 +25,17 @@ void *memcpy(void *dst, void *src, size_t size)
 
 int strcmp(const char *a, const char *b)
 {
-    while (*a & (*a == *b))
+    k_log("[STRING] Comparing %s vs %s", a, b);
+    while (*a && (*a == *b))
     {
         a++;
         b++;
     };
     return *(unsigned char *)a - *(unsigned char *)b;
+}
+
+size_t strlen(const char *a) {
+    size_t len = 0;
+    while (a[len] != '\0') len++;
+    return len;
 }

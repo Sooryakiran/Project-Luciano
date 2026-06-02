@@ -43,6 +43,7 @@ x_86_setup: setup
 	mkdir -p $(X86_BUILD_DIR)/process
 	mkdir -p $(X86_BUILD_DIR)/drivers
 	mkdir -p $(X86_BUILD_DIR)/vfs
+	mkdir -p $(X86_BUILD_DIR)/lib
 
 X86_CLANG = clang --target=x86_64-elf $(X86_CFLAGS) -c $< -o $@
 
@@ -56,6 +57,9 @@ $(X86_BUILD_DIR)/process/%.o: $(KERNEL_DIR)/process/%.c
 	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/libc/%.o: $(KERNEL_DIR)/libc/%.c
+	$(X86_CLANG)
+
+$(X86_BUILD_DIR)/lib/%.o: $(KERNEL_DIR)/lib/%.c
 	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/%.c
@@ -74,6 +78,9 @@ $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/syscalls/%.c
 	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/framebuffer/%.c
+	$(X86_CLANG)
+
+$(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/ramfs/%.c
 	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/vfs/%.o: $(KERNEL_DIR)/vfs/%.c
@@ -119,6 +126,9 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/syscall_vfs.o \
 	$(X86_BUILD_DIR)/syscall_handler.o \
 	$(X86_BUILD_DIR)/vfs/vfs.o \
+	$(X86_BUILD_DIR)/vfs/vfs_dentry.o \
+	$(X86_BUILD_DIR)/lib/kstring.o \
+	$(X86_BUILD_DIR)/drivers/ramfs.o \
 	$(X86_BUILD_DIR)/user/bin/loop.o 
 
 
@@ -168,6 +178,7 @@ X86_ARCH_SRCS = $(wildcard $(KERNEL_DIR)/arch/x86_64/*.c) \
 	$(wildcard $(KERNEL_DIR)/arch/x86_64/syscalls/*.c) \
 	$(wildcard $(KERNEL_DIR)/*.c) \
 	$(wildcard $(KERNEL_DIR)/libc/*.c) \
+	$(wildcard $(KERNEL_DIR)/lib/*.c) \
 	$(wildcard $(KERNEL_DIR)/memory_manager/*.c) \
 	$(wildcard $(KERNEL_DIR)/process/*.c) \
 	$(wildcard $(KERNEL_DIR)/drivers/*.c) \
@@ -185,6 +196,7 @@ test_x86_setup: setup
 	mkdir -p $(X86_TEST_BUILD_DIR)/arch/x86_64/boot
 	mkdir -p $(X86_TEST_BUILD_DIR)/arch/x86_64/syscalls
 	mkdir -p $(X86_TEST_BUILD_DIR)/libc
+	mkdir -p $(X86_TEST_BUILD_DIR)/lib
 	mkdir -p $(X86_TEST_BUILD_DIR)/memory_manager
 	mkdir -p $(X86_TEST_BUILD_DIR)/vfs
 	mkdir -p $(X86_TEST_BUILD_DIR)/process
@@ -217,7 +229,7 @@ test_kern: $(KERN_TEST_BINS)
 	echo "test suite completed"
 
 # test_kern: 
-# 	echo $(X86_ARCH_SRCS)
+# 	echo $(KERN_TEST_BINS)
 
 # test_x86:
 # 	echo $(X86_TEST_SRCS)

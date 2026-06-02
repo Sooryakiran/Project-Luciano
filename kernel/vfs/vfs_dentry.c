@@ -1,12 +1,15 @@
 #include "vfs.h"
+#include "debug.h"
 #include "string.h"
 
 vfs_return_flag vfs_dentry_get_child(const vfs_dentry_t *parent, const char *name, vfs_dentry_t **out)
 {
+    k_log("[VFS] Getting child %s", name);
     for (uint32_t i = 0; i < parent->child_count; i++)
     {
         if (strcmp(parent->children[i]->name, name) == 0)
         {
+            k_log("[VFS] Found match %s vs %s", name, parent->children[i]->name);
             *out = parent->children[i];
             return VFS_OK;
         }
@@ -27,5 +30,6 @@ vfs_return_flag vfs_dentry_put_child(vfs_dentry_t *parent, vfs_dentry_t *child)
     }
 
     parent->children[parent->child_count++] = child;
+    child->parent = parent;
     return VFS_OK;
 }

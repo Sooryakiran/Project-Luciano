@@ -8,6 +8,7 @@
 
 static vaddr_t bump_pointer = K_HEAP_START;
 
+#ifndef UNIT_TEST
 void *kmalloc(size_t size) {
     if (size == 0) return NULL;
 
@@ -32,6 +33,18 @@ void kfree(void *ptr) {
     // no op for now, we don't free physical or virtual
     // virtual is fine, physical? not so fine i guess
 }
+
+#else
+#include <stdlib.h>
+void *kmalloc(size_t size) {
+    return malloc(size);
+}
+
+void kfree(void *ptr) {
+    return free(ptr);
+}
+
+#endif
 
 void kmalloc_init() {
     k_log("[KMALLOC] Kernel heap initialized to %x", K_HEAP_START);

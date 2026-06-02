@@ -6,7 +6,7 @@ vfs_return_flag vfs_open(char path[VFS_PATH_MAX], vfs_flags_t flags, vfs_file_de
     return 0;
 }
 
-uint8_t vfs_aux_parse_path(char path[VFS_PATH_MAX], vfs_path_t *out)
+vfs_return_flag vfs_aux_parse_path(char path[VFS_PATH_MAX], vfs_path_t *out)
 {
     int read_ptr = 0;
     int write_depth_ptr = 0;
@@ -48,5 +48,5 @@ uint8_t vfs_aux_parse_path(char path[VFS_PATH_MAX], vfs_path_t *out)
         read_ptr++;
     }
     out->depth = (write_ptr > 0) ? write_depth_ptr + 1 : write_depth_ptr;
-    return 0;
+    return VFS_OK;
 }

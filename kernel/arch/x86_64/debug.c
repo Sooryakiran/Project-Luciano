@@ -240,6 +240,7 @@ void k_log(const char *s, ...)
     va_start(args, s);
     vprintf(s, args);
     va_end(args);
+    printf("\n");
 }
 void k_warn(const char *s, ...) {}
 void k_error(const char *s, ...) {}
