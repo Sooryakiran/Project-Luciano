@@ -26,6 +26,10 @@
 #define VFS_INODE_REG 0x8000
 #define VFS_INODE_DIR 0x4000
 
+#define VFS_SIZE_ERR -1
+#define VFS_SIZE_ZERO 0
+
+typedef int64 vfs_size;
 typedef uint64_t vfs_return_flag;
 typedef uint8_t vfs_fd_t;
 typedef uint32_t vfs_flags_t;
@@ -65,6 +69,7 @@ typedef struct file_descriptor
 typedef struct vfs_ops
 {
     vfs_return_flag (*open)(const char path[VFS_PATH_MAX], vfs_flags_t flags, vfs_file_descriptor_t *fd);
+    vfs_return_flag (*mkdir)(const char path[VFS_PATH_MAX]);
 } vfs_ops_t;
 
 vfs_return_flag vfs_open(char path[VFS_PATH_MAX], vfs_flags_t flags, vfs_file_descriptor_t **out);

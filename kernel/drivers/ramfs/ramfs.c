@@ -2,16 +2,20 @@
 #include "vfs.h"
 #include "kstring.h"
 #include "debug.h"
+#include "string.h"
+#include "kbuf.h"
 
 #define RAMDISK_MAX_FILES 4096
 
 #define RAMDISK_INITIAL_FILE_ALLOC 16
 
-typedef struct ramfs_file
-{
-    char *data;
-    uint64_t allocated;
-} ramfs_file_t;
+// typedef struct ramfs_file
+// {
+//     char *data;
+//     uint64_t allocated;
+// } ramfs_file_t;
+
+typedef kbuf_t ramfs_file_t;
 
 static ramfs_file_t data[RAMDISK_MAX_FILES];
 static vfs_ops_t ops = {};
@@ -86,8 +90,8 @@ vfs_return_flag ramfs_mkdir(char *path)
     if ((res = vfs_dentry_get_child(dir, parsed_path.path[parsed_path.depth - 1], &leaf)) != VFS_OK)
     {
         k_log("[RAMFS] creating enw dir");
-        vfs_inode_t* dir_node = ramfs_create_directory(kstrdup(parsed_path.path[parsed_path.depth - 1]));
-        
+        vfs_inode_t *dir_node = ramfs_create_directory(kstrdup(parsed_path.path[parsed_path.depth - 1]));
+
         vfs_dentry_t *new_dentry = (vfs_dentry_t *)kmalloc(sizeof(vfs_dentry_t));
         new_dentry->inode = dir_node;
         new_dentry->name = kstrdup(parsed_path.path[parsed_path.depth - 1]);
@@ -171,4 +175,46 @@ vfs_return_flag ramfs_open(char *path, vfs_flags_t flags, vfs_file_descriptor_t 
     }
 
     return 0;
+}
+
+vfs_size ramfs_read(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t limit, void *buffer)
+{
+    if (!fd || !buffer)
+        return VFS_SIZE_ERR;
+
+    if (offset >= fd->inode->size)
+        return VFS_SIZE_ZERO;
+
+    uint64_t size_limit = fd->inode->size - offset;
+    if (limit < size_limit)
+        size_limit = limit;
+
+    memcpy(buffer, data[fd->inode->ino].data + offset, size_limit);
+    return size_limit;
+}
+
+vfs_size ramfs_write(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t limit, void *buffer)
+{
+    if (!fd || !buffer) return VFS_SIZE_ERR;
+
+    uint64_t new_limit = offset + limit;
+
+    if (new_limit < offset) return VFS_SIZE_ERR;
+
+    uint64_t ino = fd->inode->ino;
+
+    while (new_limit > data[ino].allocated) {
+        if(kbuf_grow(&(data[ino])) != K_STATUS_OK) {
+            return VFS_SIZE_ERR;
+        }
+    }
+
+    // update size
+    if (new_limit > fd->inode->size) {
+        fd->inode->size = new_limit;
+    }
+
+    // now write here
+    memcpy(data[ino].data + sizeof(char) * offset, buffer, limit);
+    return limit;
 }

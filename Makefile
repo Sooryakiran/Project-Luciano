@@ -14,7 +14,7 @@ X86_TEST_BUILD_DIR := $(BUILD_DIR)/x86_64_test
 X86_TEST_DIR := tests/kernel/arch/x86_64
 KERN_TEST_DIR := tests/kernel
 X86_ISO_DIR := $(ISO_DIR)/x86_64
-ISO_NAME = waltos.iso
+ISO_NAME = luciano.iso
 
 X86_CFLAGS = -ffreestanding \
 		-fno-stack-protector \
