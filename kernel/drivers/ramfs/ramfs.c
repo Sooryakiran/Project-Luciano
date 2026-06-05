@@ -9,12 +9,6 @@
 
 #define RAMDISK_INITIAL_FILE_ALLOC 16
 
-// typedef struct ramfs_file
-// {
-//     char *data;
-//     uint64_t allocated;
-// } ramfs_file_t;
-
 typedef kbuf_t ramfs_file_t;
 
 static ramfs_file_t data[RAMDISK_MAX_FILES];
@@ -189,7 +183,8 @@ vfs_size ramfs_read(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t limit, 
     if (limit < size_limit)
         size_limit = limit;
 
-    memcpy(buffer, data[fd->inode->ino].data + offset, size_limit);
+    memcpy(buffer, data[fd->inode->ino].data + offset * sizeof(char), size_limit);
+
     return size_limit;
 }
 
@@ -198,7 +193,7 @@ vfs_size ramfs_write(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t limit,
     if (!fd || !buffer) return VFS_SIZE_ERR;
 
     uint64_t new_limit = offset + limit;
-
+    
     if (new_limit < offset) return VFS_SIZE_ERR;
 
     uint64_t ino = fd->inode->ino;

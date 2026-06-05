@@ -1,4 +1,5 @@
 #include "kbuf.h"
+#include "debug.h"
 
 k_status kbuf_grow(kbuf_t *buf)
 {
@@ -8,8 +9,12 @@ k_status kbuf_grow(kbuf_t *buf)
     if (new_size < buf->allocated)
         return K_STATUS_OVERFLOW;
 
-    char *new_data = (char *)kmalloc(sizeof(char) * new_size);
+    #ifndef UNIT_TEST
+    k_log("HELLO, size now is %d", new_size);
+    #endif
 
+    char *new_data = (char *)kmalloc(sizeof(char) * new_size);
+    
     // check if allocated properly
     if (!new_data)
         return K_STATUS_NOMEM;
