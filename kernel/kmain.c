@@ -11,6 +11,7 @@
 #include "drivers/framebuffer/font8x16.h"
 #include "scheduler.h"
 #include "string.h"
+#include "vfs.h"
 
 static volatile LIMINE_BASE_REVISION(2);
 
@@ -184,6 +185,7 @@ void kmain(void)
 
     scheduler_add(user_proc_a->tasks[0]);
     scheduler_add(user_proc_a->tasks[1]);
+    vfs_init();
 
     // scheduler_add(user_proc_b->tasks[0]);
     // scheduler_add(user_proc_b->tasks[1]);

@@ -1,8 +1,21 @@
 #include "vfs.h"
 #include "debug.h"
 
+static vfs_dentry_t vfs_root;
+
+void vfs_init()
+{
+    k_log("[VFS] Initializing VFS");
+}
+
 vfs_return_flag vfs_open(char path[VFS_PATH_MAX], vfs_flags_t flags, vfs_file_descriptor_t **out)
 {
+    k_log("[VFS] Opening file %s", path);
+    (vfs_dentry_t){
+        .child_count = 0,
+        .name = "ROOT",
+        .children = {},
+        .inode = NULL};
     return 0;
 }
 

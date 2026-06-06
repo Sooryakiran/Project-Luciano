@@ -76,6 +76,7 @@ typedef struct vfs_ops
     vfs_return_flag (*mkdir)(const char path[VFS_PATH_MAX]);
 } vfs_ops_t;
 
+void vfs_init();
 vfs_return_flag vfs_open(char path[VFS_PATH_MAX], vfs_flags_t flags, vfs_file_descriptor_t **out);
 vfs_return_flag vfs_aux_parse_path(char path[VFS_PATH_MAX], vfs_path_t *out);
 

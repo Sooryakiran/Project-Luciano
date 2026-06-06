@@ -5,12 +5,18 @@
 #include "string.h"
 #include "kbuf.h"
 
+#define offsetof(t, m) __builtin_offsetof(t, m)
+
 #define RAMDISK_MAX_FILES 4096
 #define RAMFS_RESERVED_SUB 2
 #define RAMDISK_INITIAL_FILE_ALLOC 16
 #define RAMFS_BYTE 8
 
 typedef kbuf_t ramfs_file_t;
+
+typedef struct ramfs_private_inode {
+    uint64_t file_index;
+} ramfs_private_inode;
 
 static ramfs_file_t data[RAMDISK_MAX_FILES];
 static vfs_ops_t ops = {};
@@ -332,4 +338,9 @@ vfs_size ramfs_readdir(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t size
     }
 
     return curr_size;
+}
+
+vfs_return_flag ramfs_close(vfs_file_descriptor_t *fd) {
+    // no op here
+    return VFS_OK;
 }
