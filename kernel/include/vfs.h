@@ -14,6 +14,7 @@
 #define VFS_ENOENT 2
 #define VFS_EEXIST 17
 #define VFS_ENOSPC 28
+#define VFS_ERROR 42
 
 #define VFS_O_RDONLY 0x000
 #define VFS_O_WRONLY 0x001
@@ -39,6 +40,8 @@ typedef struct vfs_ops vfs_ops_t;
 typedef struct vfs_inode vfs_inode_t;
 typedef struct file_descriptor vfs_file_descriptor_t;
 typedef struct vfs_dentry vfs_dentry_t;
+typedef struct vfs_stat vfs_stat_t;
+
 
 typedef struct vfs_path
 {
@@ -53,7 +56,7 @@ typedef struct vfs_path
 typedef struct vfs_inode
 {
     uint64_t ino;
-    uint16_t mode;
+    uint16_t mode; // here mode is only type, not linux mode with perms
     size_t size;
     vfs_ops_t* ops;
 } vfs_inode_t;
@@ -62,6 +65,7 @@ typedef struct vfs_inode
 typedef struct file_descriptor
 {
     vfs_inode_t *inode;
+    vfs_dentry_t *dentry;
     uint64_t pos;
     vfs_flags_t flags;
 } vfs_file_descriptor_t;
@@ -90,3 +94,21 @@ vfs_return_flag vfs_dentry_get_child(const vfs_dentry_t *parent, const char *nam
 vfs_return_flag vfs_dentry_put_child(vfs_dentry_t *parent, vfs_dentry_t *child);
 
 /////////////////////////////////////////////////////////
+
+// fstat
+
+typedef struct vfs_stat
+{
+    size_t st_size; // 1 word put first, don't put middle
+    uint32_t st_ino;
+    uint16_t st_mode;
+} vfs_stat_t;
+
+typedef struct vfs_dir_entry {
+    uint64_t ino;
+    uint16_t type;
+    uint16_t name_len;
+    uint16_t rec_len;
+    uint16_t _pad; // just to make sure name is alligned
+    char name[];
+} vfs_dir_entry_t;

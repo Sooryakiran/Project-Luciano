@@ -55,7 +55,32 @@ void test_easy_path_parsing()
         (vfs_test_case_t){
             .path = "/home/soorkie/../unemployed",
             .parsed_path = {"home", "unemployed"},
-            .result = 0}};
+            .result = 0},
+        (vfs_test_case_t){
+            .path = "/hello",
+            .parsed_path = {"hello"},
+            .result = 0},
+        (vfs_test_case_t){
+            .path = "/",
+            .parsed_path = {},
+            .result = 0},
+        (vfs_test_case_t){
+            .path = "/soorkie.txt",
+            .parsed_path = {"soorkie.txt"},
+            .result = 0},
+        (vfs_test_case_t){
+            .path = "soorkie.txt",
+            .parsed_path = {"soorkie.txt"},
+            .result = 0},
+        (vfs_test_case_t){
+            .path = "/./.soorkie.txt",
+            .parsed_path = {".soorkie.txt"},
+            .result = 0},
+        (vfs_test_case_t){
+            .path = "/./.soorkie.txt./",
+            .parsed_path = {".soorkie.txt."},
+            .result = 0}
+        };
 
     for (int i = 0; i < sizeof(test_cases) / sizeof(vfs_test_case_t); i++)
     {
@@ -132,7 +157,7 @@ void vfs_dentry_put_child_test()
         .name = "root",
         .parent = NULL,
     };
-    
+
     vfs_return_flag res_0 = vfs_dentry_put_child(&parent, &child_one);
     assert(res_0 == VFS_OK);
     assert(parent.child_count == 1);

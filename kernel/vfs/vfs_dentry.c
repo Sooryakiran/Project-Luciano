@@ -4,7 +4,7 @@
 
 vfs_return_flag vfs_dentry_get_child(const vfs_dentry_t *parent, const char *name, vfs_dentry_t **out)
 {
-    k_log("[VFS] Getting child %s", name);
+    k_log("[VFS] Getting child %s for parent %s", name, parent->name);
     for (uint32_t i = 0; i < parent->child_count; i++)
     {
         if (strcmp(parent->children[i]->name, name) == 0)

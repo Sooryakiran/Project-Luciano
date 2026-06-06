@@ -29,6 +29,7 @@ void test_ramfs_open_write_with_create() {
     assert(res == VFS_OK);
     assert(result->flags == (VFS_O_WRONLY | VFS_O_CREAT));
     assert(result->inode->size == 0);
+    assert(strcmp(result->dentry->name, "soorkie") == 0);
     printf("[RAMFS TEST] Test passed\n");
 }
 
@@ -39,6 +40,7 @@ void test_ramfs_open_read_existing() {
     vfs_return_flag res = ramfs_open("/soorkie", VFS_O_WRONLY | VFS_O_CREAT, &result);
     assert(res == VFS_OK);
     vfs_return_flag res_2 = ramfs_open("/soorkie", VFS_O_RDONLY, &result);
+    assert(strcmp(result->dentry->name, "soorkie") == 0);
     assert(res_2 == VFS_OK);
 }
 
@@ -124,6 +126,262 @@ void test_ramfs_write_and_read_normal() {
     printf("[RAMFS TEST] Test passed\n");
 }
 
+void test_ramfs_open_adirectory() {
+    ramfs_init();
+    printf("[RAMFS TEST] Testing ramfs opening directory\n");
+
+    vfs_return_flag res_0 = ramfs_mkdir("/hello");
+    assert(res_0 == VFS_OK);
+
+    vfs_file_descriptor_t* fd = NULL;
+    vfs_return_flag res_1 = ramfs_open("/hello", VFS_O_RDONLY, &fd);
+    assert(res_1 == VFS_OK);
+    assert(fd->inode->mode == VFS_INODE_DIR);
+    printf("[RAMFS TEST] Directory opening test passed!\n");
+}
+
+void test_ramfs_open_root() {
+    ramfs_init();
+    printf("[RAMFS TEST] Testing opening root\n");
+    vfs_file_descriptor_t* fd = NULL;
+    vfs_return_flag res = ramfs_open("/", VFS_O_RDONLY, &fd);
+    assert(res == VFS_OK);
+    assert(fd->inode->mode = VFS_INODE_DIR);
+    printf("[RAMFS TEST] Test passed\n");
+}
+
+void test_ramfs_emit_no_size() {
+    printf("[RAMFS TEST] Testing ramfs emit dentry no size\n");
+    vfs_inode_t inode = {
+        .ino = 42,
+        .mode = VFS_INODE_REG
+    };
+
+    size_t alloc_size = 3;
+    void *buff = kmalloc(alloc_size);
+    uint16_t res = ramfs_emit_entry(buff, alloc_size, &inode, "shawarma");
+    assert(res == 0);
+    printf("[RAMFS TEST] Test passed!\n");
+}
+
+void test_ramfs_emit_happy() {
+    printf("[RAMFS TEST] Testing ramfs emit happy\n");
+    vfs_inode_t inode = {
+        .ino = 37,
+        .mode = VFS_INODE_REG
+    };
+
+    size_t alloc_size = 1024;
+    void *buff = kmalloc(alloc_size);
+    u_int16_t res = ramfs_emit_entry(buff, alloc_size, &inode, "shawarma");
+    assert(res != 0);
+
+    vfs_dir_entry_t *entry = (vfs_dir_entry_t *)buff;
+    assert(entry->ino == inode.ino);
+    assert(entry->type == inode.mode);
+    assert(entry->name_len == strlen("shawarma"));
+    assert(entry->rec_len = res);
+    assert(strcmp(entry->name, "shawarma") == 0);
+    printf("[RAMFS TEST] Test passed\n");
+}
+
+typedef struct {
+    const char *name;
+    vfs_mode_t type;
+} ramfs_dir_entry_testcase;
+
+void aux_helper_readdir_verify(void *buffer, size_t buffer_len, ramfs_dir_entry_testcase* test_cases, size_t test_case_count) {
+    uint64_t pos = 0;
+    for(int i = 0; i < test_case_count; i++) {
+
+        assert(pos < buffer_len);
+        vfs_dir_entry_t *entry = (vfs_dir_entry_t *)(buffer + pos);
+        
+        ramfs_dir_entry_testcase test_case = test_cases[i];
+        printf("[RAMFS TEST]\t verifying %s vs %s\n", entry->name, test_cases[i].name);
+        assert(strcmp(entry->name, test_cases[i].name) == 0);
+        assert(entry->type == test_cases[i].type);
+        pos += entry->rec_len;
+    }
+    assert(pos >= buffer_len);
+}
+
+void test_ramfs_readdir() {
+    ramfs_init();
+    printf("[RAMFS TEST] Testing read directory\n");
+    
+    // ls /
+    vfs_file_descriptor_t *rootfp = NULL;
+    vfs_return_flag res_0 = ramfs_open("/", VFS_O_RDONLY, &rootfp);
+    assert(res_0 == 0);
+    printf("[RAMFS TEST] \t opened root\n");
+    void *read_home_buffer = kmalloc(1024);
+    vfs_size res_1 = ramfs_readdir(rootfp, 0, 1024, read_home_buffer);
+    printf("[RAMFS TEST] \t read %d entries\n", res_1);
+    
+    // read entries, look for "." and ".."
+    ramfs_dir_entry_testcase test_cases_0[] = {
+        (ramfs_dir_entry_testcase){
+            .name = ".",
+            .type = VFS_INODE_DIR
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "..",
+            .type = VFS_INODE_DIR
+        }
+    };
+    aux_helper_readdir_verify(read_home_buffer, res_1, test_cases_0, 2);
+    
+    // touch /soorkie.exe
+    vfs_file_descriptor_t *new_file = NULL;
+    vfs_return_flag res_2 = ramfs_open("/soorkie.txt", VFS_O_CREAT | VFS_O_WRONLY, &new_file);
+    printf("NEW NAME %s\n", new_file->dentry->name);
+    assert(res_2 == VFS_OK);
+
+    // ls /
+    vfs_size res_3 = ramfs_readdir(rootfp, 0, 1024, read_home_buffer);
+    
+    // read entries, look for ".", ".." and "soorkie.txt"
+    ramfs_dir_entry_testcase test_cases_1[] = {
+        (ramfs_dir_entry_testcase){
+            .name = ".",
+            .type = VFS_INODE_DIR
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "..",
+            .type = VFS_INODE_DIR
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "soorkie.txt",
+            .type = VFS_INODE_REG
+        }
+    };
+    aux_helper_readdir_verify(read_home_buffer, res_3, test_cases_1, 3);
+    
+    // mkdir /nested
+    vfs_return_flag res_4 = ramfs_mkdir("/nested");
+    assert(res_4 == VFS_OK);
+
+    ramfs_dir_entry_testcase test_cases_2[] = {
+        (ramfs_dir_entry_testcase){
+            .name = ".",
+            .type = VFS_INODE_DIR
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "..",
+            .type = VFS_INODE_DIR
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "soorkie.txt",
+            .type = VFS_INODE_REG
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "nested",
+            .type = VFS_INODE_DIR
+        }
+    };
+    vfs_size res_5 = ramfs_readdir(rootfp, 0, 1024, read_home_buffer);
+    aux_helper_readdir_verify(read_home_buffer, res_5, test_cases_2, 4);
+
+    // touch /nested/virus.exe
+    vfs_file_descriptor_t *virus_file = NULL;
+    vfs_return_flag res_6 = ramfs_open("/nested/virus.exe", VFS_O_WRONLY | VFS_O_CREAT, &virus_file);
+    assert(res_6 == VFS_OK);
+
+    // cd nested
+    vfs_file_descriptor_t *nested_dir = NULL;
+    vfs_return_flag res_7 = ramfs_open("nested/./", VFS_O_RDONLY, &nested_dir);
+    assert(res_7 == VFS_OK);
+
+    // ls 
+    vfs_size res_8 = ramfs_readdir(nested_dir, 0, 1024, read_home_buffer);
+    ramfs_dir_entry_testcase test_cases_3[] = {
+        (ramfs_dir_entry_testcase){
+            .name = ".",
+            .type = VFS_INODE_DIR
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "..",
+            .type = VFS_INODE_DIR
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "virus.exe",
+            .type = VFS_INODE_REG
+        }
+    };
+    aux_helper_readdir_verify(read_home_buffer, res_8, test_cases_3, 3);
+    printf("[RAMFS TEST] Test passed!\n");
+}
+
+void test_ramfs_readdir_offset() {
+    ramfs_init();
+    printf("[RAMFS TEST] Testing read directory offset\n");
+    
+    // ls /
+    vfs_file_descriptor_t *rootfp = NULL;
+    vfs_return_flag res_0 = ramfs_open("/", VFS_O_RDONLY, &rootfp);
+
+    void *read_home_buffer = kmalloc(1024);
+
+    // touch /soorkie.exe
+    vfs_file_descriptor_t *new_file = NULL;
+    vfs_return_flag res_2 = ramfs_open("/soorkie.txt", VFS_O_CREAT | VFS_O_WRONLY, &new_file);
+    assert(res_2 == VFS_OK);
+
+    // ls /
+    vfs_size res_3 = ramfs_readdir(rootfp, 1, 1024, read_home_buffer);
+    
+    // read entries, look for ".", ".." and "soorkie.txt"
+    ramfs_dir_entry_testcase test_cases_1[] = {
+        (ramfs_dir_entry_testcase) {
+            .name = "..",
+            .type = VFS_INODE_DIR
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "soorkie.txt",
+            .type = VFS_INODE_REG
+        }
+    };
+    aux_helper_readdir_verify(read_home_buffer, res_3, test_cases_1, 2);
+    printf("[RAMFS TEST] Test passed!\n");
+}
+
+void test_ramfs_readdir_nospace() {
+    ramfs_init();
+    printf("[RAMFS TEST] Testing read directory no space\n");
+    
+    // ls /
+    vfs_file_descriptor_t *rootfp = NULL;
+    vfs_return_flag res_0 = ramfs_open("/", VFS_O_RDONLY, &rootfp);
+
+    void *read_home_buffer = kmalloc(72);
+
+    // touch /soorkie.exe
+    vfs_file_descriptor_t *new_file = NULL;
+    vfs_return_flag res_2 = ramfs_open("/soorkie.txt", VFS_O_CREAT | VFS_O_WRONLY, &new_file);
+    assert(res_2 == VFS_OK);
+
+    // ls /
+    vfs_size res_3 = ramfs_readdir(rootfp, 0, 72, read_home_buffer);
+    // read entries, look for ".", ".." and "soorkie.txt"
+    ramfs_dir_entry_testcase test_cases_1[] = {
+        (ramfs_dir_entry_testcase) {
+            .name = ".",
+            .type = VFS_INODE_DIR
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "..",
+            .type = VFS_INODE_DIR
+        }, 
+        (ramfs_dir_entry_testcase) {
+            .name = "soorkie.txt",
+            .type = VFS_INODE_REG
+        }
+    };
+    aux_helper_readdir_verify(read_home_buffer, res_3, test_cases_1, 2);
+    printf("[RAMFS TEST] Test passed!\n");
+}
+
 int main() {
     printf("[RAMFS TEST] ramfs test suite...\n");
     test_ramfs_open_read_noexists();
@@ -134,5 +392,12 @@ int main() {
     test_ramfs_open_write_existing_with_excl();
     test_ramfs_mkdir();
     test_ramfs_write_and_read_normal();
+    test_ramfs_open_adirectory();
+    test_ramfs_open_root();
+    test_ramfs_emit_no_size();
+    test_ramfs_emit_happy();
+    test_ramfs_readdir();
+    test_ramfs_readdir_offset();
+    test_ramfs_readdir_nospace();
     return 0;
 }

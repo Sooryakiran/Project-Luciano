@@ -1,6 +1,7 @@
 #include "kstring.h"
 #include "types.h"
 #include "string.h"
+#include "debug.h"
 
 char *kstrdup(const char *input)
 {
@@ -12,5 +13,6 @@ char *kstrdup(const char *input)
         return NULL;
     memcpy(out, input, len + 1);
     out[len] = '\0';
+    k_log("[KSTRING] dupe is %s, original is %s", out, input);
     return out;
 }

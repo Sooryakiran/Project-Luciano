@@ -128,10 +128,9 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/vfs/vfs.o \
 	$(X86_BUILD_DIR)/vfs/vfs_dentry.o \
 	$(X86_BUILD_DIR)/lib/kstring.o \
+	$(X86_BUILD_DIR)/lib/kbuf.o \
 	$(X86_BUILD_DIR)/drivers/ramfs.o \
 	$(X86_BUILD_DIR)/user/bin/loop.o 
-
-
 
 # user_bin_x86:
 # 	mkdir -p $(X86_BUILD_DIR)/user/bin
