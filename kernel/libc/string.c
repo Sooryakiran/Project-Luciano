@@ -28,9 +28,11 @@ int strcmp(const char *a, const char *b)
     k_log("[STRING] Comparing %s vs %s", a, b);
     while (*a && (*a == *b))
     {
+        // k_log("CMP %c vs %c", *a, *b);
         a++;
         b++;
     };
+    // k_log("CMP %d, %d", *(unsigned char *)a, *(unsigned char *)b);
     return *(unsigned char *)a - *(unsigned char *)b;
 }
 

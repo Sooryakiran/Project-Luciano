@@ -10,3 +10,4 @@ typedef struct kbuf
 } kbuf_t;
 
 k_status kbuf_grow(kbuf_t *buf);
+k_status kbuf_init(kbuf_t *buf, size_t target_size);

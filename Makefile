@@ -13,6 +13,7 @@ X86_BUILD_DIR := $(BUILD_DIR)/x86_64
 X86_TEST_BUILD_DIR := $(BUILD_DIR)/x86_64_test
 X86_TEST_DIR := tests/kernel/arch/x86_64
 KERN_TEST_DIR := tests/kernel
+KERN_TEST_BUILD_DIR := $(BUILD_DIR)/kern_test
 X86_ISO_DIR := $(ISO_DIR)/x86_64
 ISO_NAME = luciano.iso
 
@@ -170,7 +171,7 @@ emulate_x86:
 X86_TEST_SRCS = $(wildcard $(X86_TEST_DIR)/test_*.c)
 X86_TEST_BINS = $(patsubst $(X86_TEST_DIR)/%.c, $(X86_TEST_BUILD_DIR)/%, $(X86_TEST_SRCS))
 KERN_TEST_SRCS = $(wildcard $(KERN_TEST_DIR)/test_*.c)
-KERN_TEST_BINS = $(patsubst $(KERN_TEST_DIR)/%.c, $(KERN_TEST_DIR)/%, $(KERN_TEST_SRCS))
+KERN_TEST_BINS = $(patsubst $(KERN_TEST_DIR)/%.c, $(KERN_TEST_BUILD_DIR)/%, $(KERN_TEST_SRCS))
 
 X86_ARCH_SRCS = $(wildcard $(KERNEL_DIR)/arch/x86_64/*.c) \
 	$(wildcard $(KERNEL_DIR)/arch/x86_64/boot/*.c) \
@@ -203,7 +204,7 @@ test_x86_setup: setup
 	mkdir -p $(X86_TEST_BUILD_DIR)/drivers/ramfs
 
 test_kern_setup: setup
-	mkdir -p $(KERN_TEST_DIR)
+	mkdir -p $(KERN_TEST_BUILD_DIR)
 
 X86_TEST_CLANG = clang -DUNIT_TEST -I./$(KERNEL_DIR)/include -I./$(KERNEL_DIR)/arch/x86_64 -c $< -o $@
 
@@ -213,7 +214,7 @@ $(X86_TEST_BUILD_DIR)/arch/x86_64/%.o: $(KERNEL_DIR)/arch/x86_64/%.c test_x86_se
 $(X86_TEST_BUILD_DIR)/%.o: $(KERNEL_DIR)/%.c test_x86_setup
 	$(X86_TEST_CLANG)
 
-$(KERN_TEST_DIR)/%: $(KERN_TEST_DIR)/%.c $(X86_TEST_KERN_OBJS)
+$(KERN_TEST_BUILD_DIR)/%: $(KERN_TEST_DIR)/%.c $(X86_TEST_KERN_OBJS)
 	clang -DUNIT_TEST -I./$(KERNEL_DIR)/include $< $(X86_TEST_KERN_OBJS) -o $@
 	./$@
 
