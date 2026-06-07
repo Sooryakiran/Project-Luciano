@@ -15,6 +15,8 @@
 #define VFS_EEXIST 17
 #define VFS_ENOSPC 28
 #define VFS_ERROR 42
+#define VFS_ENOMEM 12
+#define VFS_EINVAL 22
 
 #define VFS_O_RDONLY 0x000
 #define VFS_O_WRONLY 0x001
@@ -43,25 +45,24 @@ typedef struct vfs_dentry vfs_dentry_t;
 typedef struct vfs_stat vfs_stat_t;
 
 
+static vfs_dentry_t vfs_root;
+static uint32_t vfs_inode_count = 1;
+
 typedef struct vfs_path
 {
     char path[VFS_MAX_DEPTH][VFS_MAX_FILE_FOLDER_NAME];
     uint32_t depth;
 } vfs_path_t;
 
-
-/////////////////////////////////////////////////////////
-// INODE
-
 typedef struct vfs_inode
 {
     uint64_t ino;
     uint16_t mode; // here mode is only type, not linux mode with perms
     size_t size;
-    vfs_ops_t* ops;
+    vfs_ops_t *ops;
+    void *private_field;
 } vfs_inode_t;
 
-/// FILE DESCRIPTOR
 typedef struct file_descriptor
 {
     vfs_inode_t *inode;
@@ -72,31 +73,22 @@ typedef struct file_descriptor
 
 typedef struct vfs_ops
 {
-    vfs_return_flag (*open)(const char path[VFS_PATH_MAX], vfs_flags_t flags, vfs_file_descriptor_t *fd);
-    vfs_return_flag (*mkdir)(const char path[VFS_PATH_MAX]);
+    vfs_return_flag (*lookup)(vfs_inode_t *inode, const char *name, vfs_dentry_t **out);
+    vfs_return_flag (*mkdir)(vfs_inode_t *parent, vfs_dentry_t *new_dir);
+    vfs_return_flag (*open)(vfs_inode_t *parent, vfs_dentry_t *new_dentry, vfs_flags_t flags);
+    vfs_size (*read)(vfs_inode_t *inode, uint64_t offset, uint64_t limit, void *buffer);
+    vfs_size (*write)(vfs_inode_t *inode, uint64_t offset, uint64_t limit, void *buffer);
+    vfs_size (*readdir)(vfs_inode_t *inode, uint64_t offset, uint64_t size, void *buffer);
+    vfs_return_flag (*close)(vfs_inode_t *inode);
+    const char *fs_driver_name;
 } vfs_ops_t;
 
-void vfs_init();
-vfs_return_flag vfs_open(char path[VFS_PATH_MAX], vfs_flags_t flags, vfs_file_descriptor_t **out);
-vfs_return_flag vfs_aux_parse_path(char path[VFS_PATH_MAX], vfs_path_t *out);
-
-
-// DENTRY
 typedef struct vfs_dentry
 {
     char *name;
-    struct vfs_dentry *children[VFS_MAX_CHILD];
-    uint32_t child_count;
     struct vfs_dentry *parent;
     vfs_inode_t *inode;
 } vfs_dentry_t;
-
-vfs_return_flag vfs_dentry_get_child(const vfs_dentry_t *parent, const char *name, vfs_dentry_t **out);
-vfs_return_flag vfs_dentry_put_child(vfs_dentry_t *parent, vfs_dentry_t *child);
-
-/////////////////////////////////////////////////////////
-
-// fstat
 
 typedef struct vfs_stat
 {
@@ -105,7 +97,8 @@ typedef struct vfs_stat
     uint16_t st_mode;
 } vfs_stat_t;
 
-typedef struct vfs_dir_entry {
+typedef struct vfs_dir_entry
+{
     uint64_t ino;
     uint16_t type;
     uint16_t name_len;
@@ -113,3 +106,17 @@ typedef struct vfs_dir_entry {
     uint16_t _pad; // just to make sure name is alligned
     char name[];
 } vfs_dir_entry_t;
+
+void vfs_init();
+
+vfs_return_flag vfs_mkdir(char path[VFS_PATH_MAX]);
+vfs_return_flag vfs_open(char path[VFS_PATH_MAX], vfs_flags_t flags, vfs_file_descriptor_t **out);
+vfs_size vfs_read(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t limit, void *buffer);
+vfs_size vfs_write(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t limit, void *buffer);
+vfs_return_flag vfs_stat(vfs_file_descriptor_t *fd, vfs_stat_t **out);
+vfs_size vfs_readdir(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t size, void *buffer);
+vfs_return_flag vfs_close(vfs_file_descriptor_t *fd);
+
+vfs_return_flag vfs_mount(char path[VFS_PATH_MAX], vfs_ops_t *ops, void *private_fields);
+vfs_return_flag vfs_aux_parse_path(char path[VFS_PATH_MAX], vfs_path_t *out);
+vfs_return_flag vfs_validate_ops(vfs_ops_t *ops);

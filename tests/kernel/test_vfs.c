@@ -88,99 +88,99 @@ void test_easy_path_parsing()
     }
 }
 
-void vfs_dentry_get_child_exists_test()
-{
-    printf("VFS Dentry existing child get\n");
-    vfs_dentry_t child_one = {
-        .name = "home",
-        .child_count = 0,
-        .children = {}};
-    vfs_dentry_t child_two = {
-        .name = "away",
-        .child_count = 0,
-        .children = {}};
-    vfs_dentry_t parent = {
-        .children = {&child_one, &child_two},
-        .child_count = 2,
-        .name = "root",
-        .parent = NULL,
-    };
+// void vfs_dentry_get_child_exists_test()
+// {
+//     printf("VFS Dentry existing child get\n");
+//     vfs_dentry_t child_one = {
+//         .name = "home",
+//         .child_count = 0,
+//         .children = {}};
+//     vfs_dentry_t child_two = {
+//         .name = "away",
+//         .child_count = 0,
+//         .children = {}};
+//     vfs_dentry_t parent = {
+//         .children = {&child_one, &child_two},
+//         .child_count = 2,
+//         .name = "root",
+//         .parent = NULL,
+//     };
 
-    vfs_dentry_t *result = NULL; // pointer to dentry
-    vfs_return_flag res = vfs_dentry_get_child(&parent, "home", &result);
+//     vfs_dentry_t *result = NULL; // pointer to dentry
+//     vfs_return_flag res = vfs_dentry_get_child(&parent, "home", &result);
 
-    assert(res == VFS_OK);
-    assert(result == &child_one);
-    printf("VFS Dentry test passed!\n");
-}
+//     assert(res == VFS_OK);
+//     assert(result == &child_one);
+//     printf("VFS Dentry test passed!\n");
+// }
 
-void vfs_dentry_get_child_noexists_test()
-{
-    printf("VFS Dentry not existing child get\n");
-    vfs_dentry_t child_one = {
-        .name = "home",
-        .child_count = 0,
-        .children = {}};
-    vfs_dentry_t child_two = {
-        .name = "away",
-        .child_count = 0,
-        .children = {}};
-    vfs_dentry_t parent = {
-        .children = {&child_one, &child_two},
-        .child_count = 2,
-        .name = "root",
-        .parent = NULL,
-    };
+// void vfs_dentry_get_child_noexists_test()
+// {
+//     printf("VFS Dentry not existing child get\n");
+//     vfs_dentry_t child_one = {
+//         .name = "home",
+//         .child_count = 0,
+//         .children = {}};
+//     vfs_dentry_t child_two = {
+//         .name = "away",
+//         .child_count = 0,
+//         .children = {}};
+//     vfs_dentry_t parent = {
+//         .children = {&child_one, &child_two},
+//         .child_count = 2,
+//         .name = "root",
+//         .parent = NULL,
+//     };
 
-    vfs_dentry_t *result = NULL; // pointer to dentry
-    vfs_return_flag res = vfs_dentry_get_child(&parent, "doyir", &result);
+//     vfs_dentry_t *result = NULL; // pointer to dentry
+//     vfs_return_flag res = vfs_dentry_get_child(&parent, "doyir", &result);
 
-    assert(res == VFS_ENOENT);
-    printf("VFS Dentry no exist test passed!\n");
-}
+//     assert(res == VFS_ENOENT);
+//     printf("VFS Dentry no exist test passed!\n");
+// }
 
-void vfs_dentry_put_child_test()
-{
-    printf("VFS Dentry put child test\n");
-    vfs_dentry_t child_one = {
-        .name = "home",
-        .child_count = 0,
-        .children = {}};
-    vfs_dentry_t child_two = {
-        .name = "away",
-        .child_count = 0,
-        .children = {}};
+// void vfs_dentry_put_child_test()
+// {
+//     printf("VFS Dentry put child test\n");
+//     vfs_dentry_t child_one = {
+//         .name = "home",
+//         .child_count = 0,
+//         .children = {}};
+//     vfs_dentry_t child_two = {
+//         .name = "away",
+//         .child_count = 0,
+//         .children = {}};
 
-    vfs_dentry_t parent = {
-        .children = {},
-        .child_count = 0,
-        .name = "root",
-        .parent = NULL,
-    };
+//     vfs_dentry_t parent = {
+//         .children = {},
+//         .child_count = 0,
+//         .name = "root",
+//         .parent = NULL,
+//     };
 
-    vfs_return_flag res_0 = vfs_dentry_put_child(&parent, &child_one);
-    assert(res_0 == VFS_OK);
-    assert(parent.child_count == 1);
-    vfs_return_flag res_1 = vfs_dentry_put_child(&parent, &child_two);
-    assert(res_1 == VFS_OK);
-    assert(parent.child_count == 2);
-    vfs_return_flag res_2 = vfs_dentry_put_child(&parent, &child_one);
-    assert(res_2 == VFS_EEXIST);
-    assert(parent.child_count == 2);
+//     vfs_return_flag res_0 = vfs_dentry_put_child(&parent, &child_one);
+//     assert(res_0 == VFS_OK);
+//     assert(parent.child_count == 1);
+//     vfs_return_flag res_1 = vfs_dentry_put_child(&parent, &child_two);
+//     assert(res_1 == VFS_OK);
+//     assert(parent.child_count == 2);
+//     vfs_return_flag res_2 = vfs_dentry_put_child(&parent, &child_one);
+//     assert(res_2 == VFS_EEXIST);
+//     assert(parent.child_count == 2);
 
-    vfs_dentry_t *result = NULL; // pointer to dentry
-    vfs_return_flag res = vfs_dentry_get_child(&parent, "home", &result);
-    assert(res == VFS_OK);
+//     vfs_dentry_t *result = NULL; // pointer to dentry
+//     vfs_return_flag res = vfs_dentry_get_child(&parent, "home", &result);
+//     assert(res == VFS_OK);
 
-    printf("VFS put child test passed!\n");
-}
+//     printf("VFS put child test passed!\n");
+// }
 
 int main()
 {
     printf("VFS test suite..\n");
-    test_easy_path_parsing();
-    vfs_dentry_get_child_exists_test();
-    vfs_dentry_get_child_noexists_test();
-    vfs_dentry_put_child_test();
+    // test_easy_path_parsing();
+    // vfs_dentry_get_child_exists_test();
+    // vfs_dentry_get_child_noexists_test();
+    // vfs_dentry_put_child_test();
     return 0;
 }

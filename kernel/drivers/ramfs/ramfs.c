@@ -7,19 +7,30 @@
 
 #define offsetof(t, m) __builtin_offsetof(t, m)
 
-#define RAMDISK_MAX_FILES 4096
-#define RAMFS_RESERVED_SUB 2
-#define RAMDISK_INITIAL_FILE_ALLOC 16
 #define RAMFS_BYTE 8
+
 
 typedef kbuf_t ramfs_file_t;
 
-typedef struct ramfs_private_inode {
+typedef struct ramfs_private_inode
+{
     uint64_t file_index;
-} ramfs_private_inode;
+    struct vfs_dentry *children[VFS_MAX_CHILD];
+    uint32_t child_count;
+    struct vfs_inode *parent;
+} ramfs_private_inode_t;
 
 static ramfs_file_t data[RAMDISK_MAX_FILES];
-static vfs_ops_t ops = {};
+
+static vfs_ops_t ops = {
+    .lookup = ramfs_lookup,
+    .mkdir = ramfs_mkdir,
+    .open = ramfs_open,
+    .read = ramfs_read,
+    .write = ramfs_write,
+    .readdir = ramfs_readdir,
+    .close = ramfs_close,
+    .fs_driver_name = RAMFS_DRIVER_NAME};
 
 static vfs_inode_t root_inode = {
     .ino = 1,
@@ -28,209 +39,141 @@ static vfs_inode_t root_inode = {
     .size = 0,
 };
 
-static vfs_dentry_t root = {
-    .child_count = 0,
-    .children = {},
-    .inode = NULL};
-
 static uint32_t ramfs_file_count = 1;
 static uint32_t ramfs_dir_count = 2;
 
-vfs_inode_t *ramfs_create_file()
-{
-    ramfs_file_t file;
-    file.data = kmalloc(sizeof(char) * RAMDISK_INITIAL_FILE_ALLOC);
-    file.allocated = RAMDISK_INITIAL_FILE_ALLOC;
-
-    vfs_inode_t *node = kmalloc(sizeof(vfs_inode_t));
-    node->ino = ramfs_file_count;
-    node->mode = VFS_INODE_REG;
-    node->size = 0;
-    node->ops = &ops;
-
-    data[ramfs_file_count++] = file;
-
-    return node;
-}
-
-vfs_inode_t *ramfs_create_directory()
-{
-    vfs_inode_t *node = kmalloc(sizeof(vfs_inode_t));
-    node->ino = ramfs_dir_count;
-    node->mode = VFS_INODE_DIR;
-    node->size = 0;
-    node->ops = &ops;
-    return node;
-}
-
 typedef char *file;
 
-vfs_ops_t *ramfs_init()
+void *ramfs_init()
 {
-    root = (vfs_dentry_t){
-        .child_count = 0,
-        .name = "ROOT",
-        .children = {},
-        .inode = NULL};
+    for (uint32_t i = 0; i < RAMDISK_MAX_FILES; i++)
+    {
+        kbuf_init(&data[i], RAMDISK_INITIAL_FILE_ALLOC);
+    }
+}
 
-    root.parent = &root;
-    root.inode = &root_inode;
-
+vfs_ops_t *ramfs_get_mount_ops()
+{
     return &ops;
 }
 
-vfs_return_flag ramfs_mkdir(char *path)
+void *ramfs_get_mount_private_fields()
 {
-    k_log("[RAMFS] mkdir path %s", path);
-    vfs_path_t parsed_path;
-    vfs_return_flag res;
-    if ((res = vfs_aux_parse_path(path, &parsed_path)) != VFS_OK)
+    ramfs_private_inode_t *private_field = kmalloc(sizeof(ramfs_private_inode_t));
+    private_field->child_count = 0;
+    private_field->file_index = 0;
+    private_field->parent = NULL;
+    return private_field;
+}
+
+vfs_return_flag ramfs_mkdir(vfs_inode_t *parent_inode, vfs_dentry_t *new_dir)
+{
+    if (!parent_inode || !new_dir || !new_dir->inode)
+        return VFS_EINVAL;
+
+    if (parent_inode->mode != VFS_INODE_DIR)
+        return VFS_EINVAL;
+
+    ramfs_private_inode_t *private_field = kmalloc(sizeof(ramfs_private_inode_t));
+    if (!private_field)
+        return VFS_ENOMEM;
+
+    private_field->child_count = 0;
+    private_field->file_index = 0;
+    private_field->parent = parent_inode;
+
+    new_dir->inode->ops = &ops;
+    new_dir->inode->private_field = private_field;
+
+    vfs_return_flag res = ramfs_putchild(parent_inode, new_dir);
+    if (res != VFS_OK)
     {
+        kfree(private_field);
+        new_dir->inode->private_field = NULL;
         return res;
     }
 
-    // walk til parent
-    vfs_dentry_t *dir = &root;
-    for (uint32_t i = 0; i < parsed_path.depth - 1; i++)
-    {
-        if ((res = vfs_dentry_get_child(dir, parsed_path.path[i], &dir)) != VFS_OK)
-        {
-            return VFS_ENOENT;
-        }
-    }
-
-    vfs_dentry_t *leaf = NULL;
-    if ((res = vfs_dentry_get_child(dir, parsed_path.path[parsed_path.depth - 1], &leaf)) != VFS_OK)
-    {
-        k_log("[RAMFS] creating new dir");
-        vfs_inode_t *dir_node = ramfs_create_directory(kstrdup(parsed_path.path[parsed_path.depth - 1]));
-
-        vfs_dentry_t *new_dentry = (vfs_dentry_t *)kmalloc(sizeof(vfs_dentry_t));
-        new_dentry->inode = dir_node;
-        new_dentry->name = kstrdup(parsed_path.path[parsed_path.depth - 1]);
-        new_dentry->child_count = 0;
-
-        vfs_dentry_put_child(dir, new_dentry);
-
-        return VFS_OK;
-    }
-    else
-    {
-        k_log("[RAMFS] Path exists %s", leaf->name);
-        return VFS_EEXIST;
-    }
+    return VFS_OK;
 }
 
-vfs_return_flag ramfs_open(char *path, vfs_flags_t flags, vfs_file_descriptor_t **out)
+vfs_return_flag ramfs_open(vfs_inode_t *parent_inode, vfs_dentry_t *new_dentry, vfs_flags_t flags)
 {
-    k_log("[RAMFS] Opening file %s", path);
-    vfs_path_t parsed_path;
-    vfs_return_flag res;
-    if ((res = vfs_aux_parse_path(path, &parsed_path)) != VFS_OK)
-    {
-        return res;
-    }
+    k_log("[RAMFS] Opening file");
 
-    // now we are at parent directory
-    vfs_dentry_t *file = NULL;
-    if (parsed_path.depth == 0) {
-        // handle root case
-        *out = kmalloc(sizeof(vfs_file_descriptor_t));
-        (*out)->flags = flags;
-        (*out)->inode = &root_inode;
-        (*out)->pos = 0;
-        (*out)->dentry = &root;
+    if (!parent_inode || !new_dentry || !new_dentry->inode)
+        return VFS_EINVAL;
+
+    if (flags & VFS_O_CREAT)
+    {
+        ramfs_private_inode_t *private_field = (ramfs_private_inode_t *)kmalloc(sizeof(ramfs_private_inode_t));
+        if (!private_field)
+            return VFS_ENOMEM;
+        private_field->file_index = ramfs_file_count++;
+        private_field->child_count = 0;
+        private_field->parent = parent_inode;
+
+        new_dentry->inode->ops = &ops;
+        new_dentry->inode->private_field = private_field;
+
+        // attach to parent dentry
+        vfs_return_flag res = ramfs_putchild(parent_inode, new_dentry);
+        if (res != VFS_OK)
+        {
+            kfree(private_field);
+            new_dentry->inode->private_field = NULL;
+            return res;
+        }
+
         return VFS_OK;
     }
 
-    // walk till parent directory
-    vfs_dentry_t *dir = &root;
-    for (uint32_t i = 0; i < parsed_path.depth - 1; i++)
-    {
-        k_log("LOOPING\n");
-        if ((res = vfs_dentry_get_child(dir, parsed_path.path[i], &dir)) != VFS_OK)
-        {
-            return VFS_ENOENT;
-        }
-    }
+    // existing file, basically a no op here
+    if (new_dentry->inode->ops == NULL || new_dentry->inode->private_field == NULL)
+        return VFS_EINVAL;
 
-    if ((res = vfs_dentry_get_child(dir, parsed_path.path[parsed_path.depth - 1], &file)) != VFS_OK)
-    {
-        k_log("[RAMFS] File does not exist");
-        // no exist child
-        if ((flags & VFS_O_CREAT) == 0)
-        {
-            return VFS_ENOENT;
-        }
-
-        // does not exist, create new
-        vfs_inode_t *new_file_node = ramfs_create_file();
-        *out = kmalloc(sizeof(vfs_file_descriptor_t));
-        (*out)->inode = new_file_node;
-        (*out)->pos = 0;
-        (*out)->flags = flags;
-
-        // create child entry
-        vfs_dentry_t *new_dentry = (vfs_dentry_t *)kmalloc(sizeof(vfs_dentry_t));
-        new_dentry->inode = new_file_node;
-        new_dentry->name = kstrdup(parsed_path.path[parsed_path.depth - 1]);
-        k_log("[RAMFS] Creating new file %s", parsed_path.path[parsed_path.depth - 1]);
-        new_dentry->child_count = 0;
-        vfs_dentry_put_child(dir, new_dentry);
-        (*out)->dentry = new_dentry;
-
-        return VFS_OK;
-    }
-    else
-    {
-        k_log("[RAMFS] File exists!");
-        if ((flags & VFS_O_CREAT) && (flags & VFS_O_EXCL))
-        {
-            return VFS_EEXIST;
-        }
-
-        if ((flags & VFS_O_TRUNC) != 0)
-        {
-            file->inode->size = 0;
-        }
-
-        *out = kmalloc(sizeof(vfs_file_descriptor_t));
-        (*out)->flags = flags;
-        (*out)->inode = file->inode;
-        (*out)->pos = 0;
-        (*out)->dentry = file;
-        return VFS_OK;
-    }
-
-    return 0;
+    return VFS_OK;
 }
 
-vfs_size ramfs_read(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t limit, void *buffer)
+vfs_size ramfs_read(vfs_inode_t *inode, uint64_t offset, uint64_t limit, void *buffer)
 {
-    if (!fd || !buffer)
+    k_log("[RAMFS] Read all validating...");
+    if (!inode || !buffer)
+    {
+        k_log("[RAMFS] Read got invalid inode or buffer");
         return VFS_SIZE_ERR;
+    }
 
-    if (fd->inode->mode != VFS_INODE_REG)
+    if (inode->mode != VFS_INODE_REG)
+    {
+        k_log("[RAMFS] Read got invalid inode type");
         return VFS_SIZE_ERR;
+    }
 
-    if (offset >= fd->inode->size)
+    if (offset >= inode->size)
         return VFS_SIZE_ZERO;
 
-    uint64_t size_limit = fd->inode->size - offset;
+    k_log("[RAMFS] Read all validations passed");
+    uint64_t size_limit = inode->size - offset;
     if (limit < size_limit)
         size_limit = limit;
 
-    memcpy(buffer, data[fd->inode->ino].data + offset * sizeof(char), size_limit);
+    ramfs_private_inode_t *private_node = (ramfs_private_inode_t *)inode->private_field;
+
+    if (!private_node)
+        return VFS_SIZE_ERR;
+
+    memcpy(buffer, data[private_node->file_index].data + offset, size_limit);
 
     return size_limit;
 }
 
-vfs_size ramfs_write(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t limit, void *buffer)
+vfs_size ramfs_write(vfs_inode_t *inode, uint64_t offset, uint64_t limit, void *buffer)
 {
-    if (!fd || !buffer)
+    k_log("[RAMFS] Writing file");
+    if (!inode || !buffer)
         return VFS_SIZE_ERR;
 
-    if (fd->inode->mode != VFS_INODE_REG)
+    if (inode->mode != VFS_INODE_REG)
         return VFS_SIZE_ERR;
 
     uint64_t new_limit = offset + limit;
@@ -238,34 +181,31 @@ vfs_size ramfs_write(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t limit,
     if (new_limit < offset)
         return VFS_SIZE_ERR;
 
-    uint64_t ino = fd->inode->ino;
+    k_log("[RAMFS] Writing file all validations completed!");
+    ramfs_private_inode_t *private_node = (ramfs_private_inode_t *)inode->private_field;
 
-    while (new_limit > data[ino].allocated)
+    if (!private_node)
+        return VFS_SIZE_ERR;
+
+    k_log("[RAMFS] Writing private node intact!");
+    while (new_limit > data[private_node->file_index].allocated)
     {
-        if (kbuf_grow(&(data[ino])) != K_STATUS_OK)
+        k_log("[RAMFS] Reallocating ramdisk buffer for file %d, (current size: %d, required size %d)", private_node->file_index, data[private_node->file_index].allocated, new_limit);
+        if (kbuf_grow(&(data[private_node->file_index])) != K_STATUS_OK)
         {
             return VFS_SIZE_ERR;
         }
     }
 
     // update size
-    if (new_limit > fd->inode->size)
+    if (new_limit > inode->size)
     {
-        fd->inode->size = new_limit;
+        inode->size = new_limit;
     }
 
     // now write here
-    memcpy(data[ino].data + sizeof(char) * offset, buffer, limit);
+    memcpy(data[private_node->file_index].data + offset, buffer, limit);
     return limit;
-}
-
-vfs_return_flag ramfs_stat(vfs_file_descriptor_t *fd, vfs_stat_t **out)
-{
-    *out = kmalloc(sizeof(vfs_stat_t));
-    (*out)->st_ino = fd->inode->ino;
-    (*out)->st_mode = fd->inode->mode;
-    (*out)->st_size = fd->inode->size;
-    return VFS_OK;
 }
 
 uint16_t ramfs_emit_entry(void *buf, uint64_t limit, vfs_inode_t *inode, const char *entry_name)
@@ -289,15 +229,19 @@ uint16_t ramfs_emit_entry(void *buf, uint64_t limit, vfs_inode_t *inode, const c
     return size;
 }
 
-vfs_size ramfs_readdir(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t size, void *buffer)
+vfs_size ramfs_readdir(vfs_inode_t *inode, uint64_t offset, uint64_t size, void *buffer)
 {
-    if (!size || !buffer)
+    if (!size || !buffer || !inode)
         return VFS_SIZE_ERR;
 
-    if (fd->inode->mode != VFS_INODE_DIR)
+    if (inode->mode != VFS_INODE_DIR)
         return VFS_SIZE_ERR;
 
-    uint32_t total_entries = RAMFS_RESERVED_SUB + fd->dentry->child_count;
+    ramfs_private_inode_t *private_fields = (ramfs_private_inode_t *)inode->private_field;
+    if (!private_fields)
+        return VFS_SIZE_ERR;
+
+    uint32_t total_entries = RAMFS_RESERVED_SUB + private_fields->child_count;
 
     if (offset >= total_entries)
         return VFS_SIZE_ZERO;
@@ -312,13 +256,17 @@ vfs_size ramfs_readdir(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t size
         switch (offset)
         {
         case 0:
-            size_written = ramfs_emit_entry(buffer_p, size, fd->inode, ".");
+            size_written = ramfs_emit_entry(buffer_p, size, inode, ".");
             break;
         case 1:
-            size_written = ramfs_emit_entry(buffer_p, size, fd->dentry->parent->inode, "..");
+            if (private_fields->parent == NULL)
+                // no parent, ".." of root is "."
+                size_written = ramfs_emit_entry(buffer_p, size, inode, "..");
+            else
+                size_written = ramfs_emit_entry(buffer_p, size, private_fields->parent, "..");
             break;
         default:
-            vfs_dentry_t *dentry = fd->dentry->children[offset - RAMFS_RESERVED_SUB];
+            vfs_dentry_t *dentry = private_fields->children[offset - RAMFS_RESERVED_SUB];
             size_written = ramfs_emit_entry(buffer_p, size, dentry->inode, dentry->name);
             break;
         }
@@ -340,7 +288,53 @@ vfs_size ramfs_readdir(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t size
     return curr_size;
 }
 
-vfs_return_flag ramfs_close(vfs_file_descriptor_t *fd) {
+vfs_return_flag ramfs_close(vfs_inode_t *inode)
+{
     // no op here
+    return VFS_OK;
+}
+
+vfs_return_flag ramfs_lookup(vfs_inode_t *inode, const char *name, vfs_dentry_t **out)
+{
+    ramfs_private_inode_t *private_node = (ramfs_private_inode_t *)inode->private_field;
+    k_log("[RAMFS] Lookup for child %s, num kids is %d", name, private_node->child_count);
+
+    if (inode->mode != VFS_INODE_DIR)
+        return VFS_ENOENT;
+
+    for (uint32_t i = 0; i < private_node->child_count; i++)
+    {
+        if (strcmp(private_node->children[i]->name, name) == 0)
+        {
+            k_log("[RAMFS] Lookup found match %s vs %s", name, private_node->children[i]->name);
+            *out = private_node->children[i];
+            return VFS_OK;
+        }
+        else
+        {
+            k_log("[RAMFS] no match %s vs %s", name, private_node->children[i]->name);
+        }
+    }
+    k_log("[RAMFS] lookup failed");
+    return VFS_ENOENT;
+}
+
+vfs_return_flag ramfs_putchild(vfs_inode_t *inode, vfs_dentry_t *child)
+{
+    k_log("[RAMFS] Put new child %s", child->name);
+    ramfs_private_inode_t *private_node = (ramfs_private_inode_t *)inode->private_field;
+    if (private_node->child_count >= RAMFS_MAX_CHILD)
+        return VFS_ENOSPC;
+
+    // if (inode->mode != VFS_INODE_DIR)
+    //     return VFS_ENOENT;
+
+    for (uint32_t i = 0; i < private_node->child_count; i++)
+    {
+        if (strcmp(private_node->children[i]->name, child->name) == 0)
+            return VFS_EEXIST;
+    }
+
+    private_node->children[private_node->child_count++] = child;
     return VFS_OK;
 }
