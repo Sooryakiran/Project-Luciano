@@ -3,8 +3,6 @@
 #include "kmalloc.h"
 #include "kstring.h"
 
-
-
 void vfs_init()
 {
     k_log("[VFS] Initializing VFS");

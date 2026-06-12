@@ -22,6 +22,7 @@ X86_CFLAGS = -ffreestanding \
 		-fno-pic \
 		-mno-red-zone \
 		-mcmodel=kernel \
+		-D__X86_64__ \
 		-I./$(KERNEL_DIR)/include \
 
 limine_setup:
@@ -81,8 +82,15 @@ $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/syscalls/%.c
 $(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/framebuffer/%.c
 	$(X86_CLANG)
 
-$(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/ramfs/%.c
+$(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/ramfs/%.c 
 	$(X86_CLANG)
+
+$(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/block_device/%.c
+	$(X86_CLANG)
+
+$(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/ide/%.c
+	$(X86_CLANG)
+
 
 $(X86_BUILD_DIR)/vfs/%.o: $(KERNEL_DIR)/vfs/%.c
 	$(X86_CLANG)
@@ -131,6 +139,8 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/lib/kstring.o \
 	$(X86_BUILD_DIR)/lib/kbuf.o \
 	$(X86_BUILD_DIR)/drivers/ramfs.o \
+	$(X86_BUILD_DIR)/drivers/block_device.o \
+	$(X86_BUILD_DIR)/drivers/ide.o \
 	$(X86_BUILD_DIR)/user/bin/loop.o 
 
 # user_bin_x86:
@@ -138,7 +148,6 @@ X86_OBJS = \
 # 	nasm -f bin user/loop_app/loop.asm -o $(X86_BUILD_DIR)/user/bin/loop.bin
 # 	$(OBJCOPY) -I binary -O elf64-x86-64 -B i386:x86-64 \
 # 		$(X86_BUILD_DIR)/user/bin/loop.bin $(X86_BUILD_DIR)/user/bin/loop.o
-
 
 link_kernel_x86: $(X86_OBJS)
 	ld.lld \
@@ -161,11 +170,24 @@ os_iso_x86: link_kernel_x86
 		$(X86_ISO_DIR) -o $(ISO_NAME)
 	$(LIMINE_DIR)/limine bios-install $(ISO_NAME)
 
+setup_emulate_ide_drives:
+	mkdir -p drives
+	dd if=/dev/zero of=drives/disk1.img bs=1M count=100
+	dd if=/dev/zero of=drives/disk2.img bs=1M count=100
+	dd if=/dev/zero of=drives/disk3.img bs=1M count=100
+	mkfs.fat -F 32 drives/disk1.img
+	mkfs.fat -F 32 drives/disk2.img
+	mkfs.fat -F 32 drives/disk3.img
+
 emulate_x86: 
 	qemu-system-x86_64 \
     -cdrom $(ISO_NAME) \
     -serial stdio \
+	-drive file=drives/disk1.img,format=raw,if=ide,index=0 \
+    -drive file=drives/disk2.img,format=raw,if=ide,index=1 \
+    -drive file=drives/disk3.img,format=raw,if=ide,index=3 \
 	-display cocoa,zoom-to-fit=on \
+	-boot d \
     -m 256M 
 
 X86_TEST_SRCS = $(wildcard $(X86_TEST_DIR)/test_*.c)

@@ -155,6 +155,15 @@ void k_printf(const char *s, va_list args)
                 break;
             }
 
+            case 's':
+            {
+                const char* c;
+                c = va_arg(args, char *);
+                k_print(c);
+                s++;
+                break;
+            }
+
             default:
             {
                 k_putc('%');

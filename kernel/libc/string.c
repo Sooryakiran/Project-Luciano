@@ -25,7 +25,7 @@ void *memcpy(void *dst, void *src, size_t size)
 
 int strcmp(const char *a, const char *b)
 {
-    k_log("[STRING] Comparing %s vs %s", a, b);
+    // k_log("[STRING] Comparing %s vs %s", a, b);
     while (*a && (*a == *b))
     {
         // k_log("CMP %c vs %c", *a, *b);
