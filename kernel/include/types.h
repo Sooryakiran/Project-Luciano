@@ -13,6 +13,7 @@ typedef uint64_t size_t;  // we are 64 bit
 #endif
 
 typedef long long int int64;
+typedef short int int16;
 
 typedef uint64_t paddr_t; // physical address
 typedef uint64_t vaddr_t; // virtual address alias

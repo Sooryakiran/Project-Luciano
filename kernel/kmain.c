@@ -12,6 +12,8 @@
 #include "scheduler.h"
 #include "string.h"
 #include "vfs.h"
+#include "block_device.h"
+#include "diskmanager.h"
 
 static volatile LIMINE_BASE_REVISION(2);
 
@@ -159,6 +161,8 @@ void kmain(void)
     vmm_init(info.kernel_physical_addr, info.kernel_virtual_addr, info.hhdm_offset, info.regions, info.region_count);
     kmalloc_init();
     drivers_init(&info);
+    block_devices_init();
+    diskmanager_init();
     scheduler_init();
 
 #ifndef UNIT_TEST

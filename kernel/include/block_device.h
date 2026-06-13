@@ -30,7 +30,10 @@ typedef struct block_drive
     const char *block_drive_name;
     block_driver_t* ops;
     void *private_fields;
+    uint16_t logical_sector_size;
 } block_drive_t;
 
 
 void block_devices_validate_and_add(block_drive_t *drives, uint16_t counts);
+uint16_t block_devices_get_count();
+block_drive_t **block_devices_get();

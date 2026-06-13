@@ -1,5 +1,5 @@
 #include "drivers/ide/ide.h"
-#include "drivers/block_device/block_device.h"
+#include "block_device.h"
 #include "debug.h"
 #include "io.h"
 #include "string.h"
@@ -73,15 +73,19 @@ static block_driver_t ops = {
 static block_drive_t all_drives[] = {
     {.block_drive_name = "hda",
      .ops = &ops,
+     .logical_sector_size = 512, // hard coding for now
      .private_fields = (void *)&all_drive_configs[0]},
     {.block_drive_name = "hdb",
      .ops = &ops,
+     .logical_sector_size = 512,
      .private_fields = (void *)&all_drive_configs[1]},
     {.block_drive_name = "hdc",
      .ops = &ops,
+     .logical_sector_size = 512,
      .private_fields = (void *)&all_drive_configs[2]},
     {.block_drive_name = "hdd",
      .ops = &ops,
+     .logical_sector_size = 512,
      .private_fields = (void *)&all_drive_configs[3]}};
 
 void ide_init()

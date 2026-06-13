@@ -5,3 +5,4 @@ xorriso
 objcopy
 
 brew install dosfstools
+brew install parted

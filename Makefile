@@ -22,6 +22,12 @@ X86_CFLAGS = -ffreestanding \
 		-fno-pic \
 		-mno-red-zone \
 		-mcmodel=kernel \
+		-mno-mmx \
+		-mno-sse \
+		-mno-sse2 \
+		-mno-sse3 \
+		-mno-3dnow \
+		-msoft-float \
 		-D__X86_64__ \
 		-I./$(KERNEL_DIR)/include \
 
@@ -46,6 +52,8 @@ x_86_setup: setup
 	mkdir -p $(X86_BUILD_DIR)/drivers
 	mkdir -p $(X86_BUILD_DIR)/vfs
 	mkdir -p $(X86_BUILD_DIR)/lib
+	mkdir -p $(X86_BUILD_DIR)/diskmanager
+
 
 X86_CLANG = clang --target=x86_64-elf $(X86_CFLAGS) -c $< -o $@
 
@@ -64,7 +72,7 @@ $(X86_BUILD_DIR)/libc/%.o: $(KERNEL_DIR)/libc/%.c
 $(X86_BUILD_DIR)/lib/%.o: $(KERNEL_DIR)/lib/%.c
 	$(X86_CLANG)
 
-$(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/%.c
+$(X86_BUILD_DIR)/diskmanager/%.o: $(KERNEL_DIR)/diskmanager/%.c
 	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/%.asm
@@ -77,6 +85,9 @@ $(X86_BUILD_DIR)/boot/%.o: $(KERNEL_DIR)/arch/x86_64/boot/%.c
 	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/%.o: $(KERNEL_DIR)/arch/x86_64/syscalls/%.c
+	$(X86_CLANG)
+
+$(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/%.c
 	$(X86_CLANG)
 
 $(X86_BUILD_DIR)/drivers/%.o: $(KERNEL_DIR)/drivers/framebuffer/%.c
@@ -139,7 +150,9 @@ X86_OBJS = \
 	$(X86_BUILD_DIR)/lib/kstring.o \
 	$(X86_BUILD_DIR)/lib/kbuf.o \
 	$(X86_BUILD_DIR)/drivers/ramfs.o \
-	$(X86_BUILD_DIR)/drivers/block_device.o \
+	$(X86_BUILD_DIR)/diskmanager/block_device.o \
+	$(X86_BUILD_DIR)/diskmanager/diskmanager.o \
+	$(X86_BUILD_DIR)/diskmanager/mbr.o \
 	$(X86_BUILD_DIR)/drivers/ide.o \
 	$(X86_BUILD_DIR)/user/bin/loop.o 
 
@@ -176,8 +189,15 @@ setup_emulate_ide_drives:
 	dd if=/dev/zero of=drives/disk2.img bs=1M count=100
 	dd if=/dev/zero of=drives/disk3.img bs=1M count=100
 	mkfs.fat -F 32 drives/disk1.img
-	mkfs.fat -F 32 drives/disk2.img
 	mkfs.fat -F 32 drives/disk3.img
+
+# 	disk 2 has 2 partitions	
+	@DISK=$$(hdiutil attach \
+		-imagekey diskimage-class=CRawDiskImage \
+		-nomount drives/disk2.img | head -n1); \
+	echo "$$DISK"; \
+	diskutil partitionDisk $$DISK MBR FAT32 PART1 50M FAT32 PART2 R; \
+	hdiutil detach $$DISK
 
 emulate_x86: 
 	qemu-system-x86_64 \
