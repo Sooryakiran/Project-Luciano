@@ -219,9 +219,16 @@ vfs_size vfs_write(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t limit, v
 vfs_return_flag vfs_stat(vfs_file_descriptor_t *fd, vfs_stat_t **out)
 {
     *out = kmalloc(sizeof(vfs_stat_t));
+    
+    if (!out) {
+        return VFS_ENOMEM;
+    }
+
     (*out)->st_ino = fd->inode->ino;
     (*out)->st_mode = fd->inode->mode;
     (*out)->st_size = fd->inode->size;
+    
+    return VFS_OK;
 }
 
 vfs_size vfs_readdir(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t size, void *buffer)
@@ -307,4 +314,6 @@ vfs_return_flag vfs_mount(char path[VFS_PATH_MAX], vfs_superblock_t *sb)
         vfs_root.inode->private_field = sb->private_fields;
         return VFS_OK;
     }
+    // TODO: implment stack and mount at other places
+    return VFS_ERROR;
 }

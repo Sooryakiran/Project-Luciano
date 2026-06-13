@@ -8,7 +8,6 @@
 void exception_handler(uint64_t, uint64_t, uint64_t);
 void irq_handler(uint64_t);
 void software_interrupt_handler(uint64_t);
-void timer_handler();
 void keyboard_handler();
 // uint64_t isr_read_cr2();
 
@@ -43,7 +42,7 @@ void irq_handler(uint64_t vector)
     switch (vector)
     {
     case 32:
-        timer_handler();
+        // Handled by assembly, this part is never reached 
         break;
     case 33:
         keyboard_handler();
@@ -58,12 +57,12 @@ void software_interrupt_handler(uint64_t vector)
     k_log("[ISR] Software interrupt recieved %x", vector);
 }
 
-void timer_handler()
-{
-    // k_log("Timer Interrupt");
-    process_t *current_out, *next_out;
-    scheduler_tick(&current_out, &next_out);
-}
+// void timer_handler()
+// {
+//     // k_log("Timer Interrupt");
+//     process_t *current_out, *next_out;
+//     scheduler_tick(&current_out, &next_out);
+// }
 
 void keyboard_handler()
 {

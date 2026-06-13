@@ -13,7 +13,7 @@ void process_destroy(process_t *process)
 }
 
 void process_add_task(process_t *process, task_t *task) {
-    if(process->task_count >= MAX_TASKS_PER_PROCESS) {
+    if(process->task_count >= MAX_TASKS_PER_PROCESS - 1) {
         k_panic("[PROCESS] Unable to add more tasks for process with pid %d", process->pid);
     }
     process->tasks[process->task_count++] = task;

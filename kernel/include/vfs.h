@@ -46,8 +46,7 @@ typedef struct vfs_dentry vfs_dentry_t;
 typedef struct vfs_stat vfs_stat_t;
 typedef struct vfs_superblock vfs_superblock_t;
 
-static vfs_dentry_t vfs_root;
-static uint32_t vfs_inode_count = 1;
+
 
 typedef struct vfs_path
 {
@@ -115,6 +114,8 @@ typedef struct vfs_superblock
     void *private_fields;
 } vfs_superblock_t;
 
+static vfs_dentry_t vfs_root;
+static uint32_t vfs_inode_count = 1;
 
 void vfs_init();
 

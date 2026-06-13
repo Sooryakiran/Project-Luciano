@@ -157,7 +157,7 @@ void k_printf(const char *s, va_list args)
 
             case 's':
             {
-                const char* c;
+                const char *c;
                 c = va_arg(args, char *);
                 k_print(c);
                 s++;
@@ -166,9 +166,9 @@ void k_printf(const char *s, va_list args)
 
             case 'c':
             {
-                char c;
-                c = va_arg(args, char);
-                k_putc(c);
+                int c;
+                c = va_arg(args, int);
+                k_putc((char)c);
                 s++;
                 break;
             }

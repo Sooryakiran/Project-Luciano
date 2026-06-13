@@ -25,8 +25,8 @@ void *memcpy(void *dst, void *src, size_t size)
 
 int memcmp(const void *a, const void *b, size_t n)
 {
-    const unsigned char *astr = (char *)a;
-    const unsigned char *bstr = (char *)b;
+    const unsigned char *astr = (unsigned char *)a;
+    const unsigned char *bstr = (unsigned char *)b;
 
     for (int i = 0; i < n; i++)
     {

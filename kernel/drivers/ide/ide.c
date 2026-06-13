@@ -324,7 +324,7 @@ int ide_read(block_drive_t *this, uint64_t lba, uint32_t count, void *buffer)
 
 block_drive_t *ide_get_drives()
 {
-    return &all_drives;
+    return all_drives;
 }
 
 uint16_t ide_get_drive_count()

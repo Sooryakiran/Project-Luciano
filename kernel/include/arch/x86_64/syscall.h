@@ -28,4 +28,4 @@ uint64_t sys_getpid();
 uint64_t sys_gettid();
 
 // vfs
-uint64_t sys_vfs_open();
+uint64_t sys_vfs_open(uint64_t arg1, uint64_t arg2, uint64_t arg3);

@@ -48,7 +48,7 @@ void block_devices_validate_and_add(block_drive_t *drives, uint16_t counts)
     for (uint16_t count = 0; count < counts; count++)
     {
         k_log("[BLD] Current count is %d", count);
-        char *name = drives[count].block_drive_name;
+        const char *name = drives[count].block_drive_name;
         k_log("[BLD] Looking at %s", name);
 
         if (!drives[count].ops)

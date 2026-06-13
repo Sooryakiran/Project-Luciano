@@ -8,7 +8,7 @@
 #define RAMFS_MAX_CHILD 1024
 #define RAMFS_DRIVER_NAME "ramfs"
 
-void *ramfs_init();
+void ramfs_init();
 
 vfs_return_flag ramfs_lookup(vfs_inode_t *inode, const char *name, vfs_dentry_t **out);
 vfs_return_flag ramfs_mkdir(vfs_inode_t *parent, vfs_dentry_t *new_dir);

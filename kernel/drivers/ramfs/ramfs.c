@@ -44,7 +44,7 @@ static uint32_t ramfs_dir_count = 2;
 
 typedef char *file;
 
-void *ramfs_init()
+void ramfs_init()
 {
     for (uint32_t i = 0; i < RAMDISK_MAX_FILES; i++)
     {
@@ -224,7 +224,7 @@ uint16_t ramfs_emit_entry(void *buf, uint64_t limit, vfs_inode_t *inode, const c
     entry->type = inode->mode;
     entry->name_len = name_len;
     entry->rec_len = size;
-    memcpy(entry->name, entry_name, name_len);
+    memcpy(entry->name, (void *)entry_name, name_len);
     entry->name[name_len] = '\0';
     return size;
 }
@@ -265,7 +265,7 @@ vfs_size ramfs_readdir(vfs_inode_t *inode, uint64_t offset, uint64_t size, void 
             else
                 size_written = ramfs_emit_entry(buffer_p, size, private_fields->parent, "..");
             break;
-        default:
+        default: ;
             vfs_dentry_t *dentry = private_fields->children[offset - RAMFS_RESERVED_SUB];
             size_written = ramfs_emit_entry(buffer_p, size, dentry->inode, dentry->name);
             break;
