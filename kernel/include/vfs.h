@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "diskmanager.h"
 
 #define VFS_MAX_FILE_FOLDER_NAME 256               // max file or folder name size
 #define VFS_PATH_MAX 4096                          // max path length
@@ -43,7 +44,7 @@ typedef struct vfs_inode vfs_inode_t;
 typedef struct file_descriptor vfs_file_descriptor_t;
 typedef struct vfs_dentry vfs_dentry_t;
 typedef struct vfs_stat vfs_stat_t;
-
+typedef struct vfs_superblock vfs_superblock_t;
 
 static vfs_dentry_t vfs_root;
 static uint32_t vfs_inode_count = 1;
@@ -107,6 +108,14 @@ typedef struct vfs_dir_entry
     char name[];
 } vfs_dir_entry_t;
 
+typedef struct vfs_superblock
+{
+    disk_manager_volume_t* volume;
+    vfs_ops_t* fs_ops;
+    void *private_fields;
+} vfs_superblock_t;
+
+
 void vfs_init();
 
 vfs_return_flag vfs_mkdir(char path[VFS_PATH_MAX]);
@@ -117,6 +126,6 @@ vfs_return_flag vfs_stat(vfs_file_descriptor_t *fd, vfs_stat_t **out);
 vfs_size vfs_readdir(vfs_file_descriptor_t *fd, uint64_t offset, uint64_t size, void *buffer);
 vfs_return_flag vfs_close(vfs_file_descriptor_t *fd);
 
-vfs_return_flag vfs_mount(char path[VFS_PATH_MAX], vfs_ops_t *ops, void *private_fields);
+vfs_return_flag vfs_mount(char path[VFS_PATH_MAX], vfs_superblock_t *sb);
 vfs_return_flag vfs_aux_parse_path(char path[VFS_PATH_MAX], vfs_path_t *out);
 vfs_return_flag vfs_validate_ops(vfs_ops_t *ops);

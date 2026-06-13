@@ -1,7 +1,7 @@
 #include "debug.h"
 #include "types.h"
 #include "arch/x86_64/pic.h"
-#include "arch/x86_64/io.h"
+#include "io.h"
 #include "scheduler.h"
 #include "arch/x86_64/crx.h"
 

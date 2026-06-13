@@ -338,3 +338,11 @@ vfs_return_flag ramfs_putchild(vfs_inode_t *inode, vfs_dentry_t *child)
     private_node->children[private_node->child_count++] = child;
     return VFS_OK;
 }
+
+vfs_superblock_t *ramfs_get_sb() {
+    vfs_superblock_t *sb = (vfs_superblock_t *)kmalloc(sizeof(vfs_superblock_t));
+    sb->volume = NULL;
+    sb->fs_ops = ramfs_get_mount_ops();
+    sb->private_fields = ramfs_get_mount_private_fields();
+    return sb;
+}

@@ -266,13 +266,18 @@ vfs_return_flag vfs_validate_ops(vfs_ops_t *ops)
     return VFS_OK;
 }
 
-vfs_return_flag vfs_mount(char path[VFS_PATH_MAX], vfs_ops_t *ops, void *private_fields)
+vfs_return_flag vfs_mount(char path[VFS_PATH_MAX], vfs_superblock_t *sb)
 {
-    k_log("[VFS] mounting file system on %s driver %s", path, ops->fs_driver_name);
+    if (!sb || !sb->fs_ops) {
+        k_log("[VFS] Superblock invalid");
+        return VFS_EINVAL;
+    }
+    
+    k_log("[VFS] mounting file system on %s driver %s", path, sb->fs_ops->fs_driver_name);
     vfs_path_t parsed_path;
     vfs_return_flag res;
 
-    res = vfs_validate_ops(ops);
+    res = vfs_validate_ops(sb->fs_ops);
     if (res != VFS_OK)
     {
         k_log("[VFS] Invalid filesystem implementation");
@@ -298,8 +303,8 @@ vfs_return_flag vfs_mount(char path[VFS_PATH_MAX], vfs_ops_t *ops, void *private
             return VFS_EINVAL;
         }
         k_log("[VFS] goinf to mount");
-        vfs_root.inode->ops = ops;
-        vfs_root.inode->private_field = private_fields;
+        vfs_root.inode->ops = sb->fs_ops;
+        vfs_root.inode->private_field = sb->private_fields;
         return VFS_OK;
     }
 }

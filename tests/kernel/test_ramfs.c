@@ -9,9 +9,9 @@ void test_ramfs_mount()
     printf("[RAMFS TEST] ramfs mount test\n");
     vfs_init();
     ramfs_init();
-    vfs_return_flag res_0 = vfs_mount("/", ramfs_get_mount_ops(), ramfs_get_mount_private_fields());
+    vfs_return_flag res_0 = vfs_mount("/", ramfs_get_sb());
     assert(res_0 == VFS_OK);
-    vfs_return_flag res_1 = vfs_mount("/", ramfs_get_mount_ops(), ramfs_get_mount_private_fields());
+    vfs_return_flag res_1 = vfs_mount("/", ramfs_get_sb());
     assert(res_1 != VFS_OK);
     printf("[RAMFS TEST] test passed\n");
 }
@@ -20,7 +20,7 @@ void test_setup()
 {
     vfs_init();
     ramfs_init();
-    vfs_return_flag res_0 = vfs_mount("/", ramfs_get_mount_ops(), ramfs_get_mount_private_fields());
+    vfs_return_flag res_0 = vfs_mount("/", ramfs_get_sb());
     assert(res_0 == VFS_OK);
 }
 

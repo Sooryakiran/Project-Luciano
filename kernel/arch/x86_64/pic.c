@@ -1,5 +1,5 @@
 #include "arch/x86_64/pic.h"
-#include "arch/x86_64/io.h"
+#include "io.h"
 #include "debug.h"
 
 // https://wiki.osdev.org/8259_PIC

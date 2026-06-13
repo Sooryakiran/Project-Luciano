@@ -1,3 +1,4 @@
+#pragma once
 #include "vfs.h"
 #include "kmalloc.h"
 
@@ -20,5 +21,6 @@ vfs_return_flag ramfs_close(vfs_inode_t *inode);
 uint16_t ramfs_emit_entry(void *buf, uint64_t limit, vfs_inode_t *inode, const char *entry_name);
 vfs_return_flag ramfs_putchild(vfs_inode_t *inode, vfs_dentry_t *child);
 
+vfs_superblock_t *ramfs_get_sb();
 vfs_ops_t *ramfs_get_mount_ops();
 void *ramfs_get_mount_private_fields();

@@ -226,6 +226,8 @@ X86_ARCH_SRCS = $(wildcard $(KERNEL_DIR)/arch/x86_64/*.c) \
 	$(wildcard $(KERNEL_DIR)/drivers/*.c) \
 	$(wildcard $(KERNEL_DIR)/drivers/framebuffer/*.c) \
 	$(wildcard $(KERNEL_DIR)/drivers/ramfs/*.c) \
+	$(wildcard $(KERNEL_DIR)/drivers/ide/*.c) \
+	$(wildcard $(KERNEL_DIR)/diskmanager/*.c) \
 	$(wildcard $(KERNEL_DIR)/vfs/*.c)
 
 
@@ -244,6 +246,9 @@ test_x86_setup: setup
 	mkdir -p $(X86_TEST_BUILD_DIR)/process
 	mkdir -p $(X86_TEST_BUILD_DIR)/drivers/framebuffer
 	mkdir -p $(X86_TEST_BUILD_DIR)/drivers/ramfs
+	mkdir -p $(X86_TEST_BUILD_DIR)/drivers/ide
+	mkdir -p $(X86_TEST_BUILD_DIR)/diskmanager
+
 
 test_kern_setup: setup
 	mkdir -p $(KERN_TEST_BUILD_DIR)
